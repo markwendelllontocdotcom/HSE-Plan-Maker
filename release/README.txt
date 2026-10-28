@@ -1,5 +1,5 @@
 HSE PLAN MAKER - User guide
-Version 1.0.3 (28 Oct 2026)
+Version 1.0.4 (29 Oct 2026)
 
 Developed by Mark Lontoc | Dubai, United Arab Emirates | (c) 2026 MLWorks. All rights reserved.
 
@@ -19,6 +19,9 @@ WHAT IS IN THIS FOLDER
 
 
 OPENING THE APP
+  - Web version: https://markwendelllontocdotcom.github.io/HSE-Plan-Maker/
+    In Edge or Chrome, install it from the address bar (it then works offline like a program).
+    On iPhone or iPad, open it in Safari and use Share > Add to Home Screen.
   - Double-click "HSE Plan Maker.html". Edge or Chrome is best: they can save exports straight into a
     folder you choose and can print and share directly.
   - Desktop shortcut: right-click HSE Plan Maker.html > Send to > Desktop (create shortcut). To give it
@@ -68,7 +71,9 @@ SHARING
     Teams...). Share > Outlook email draft saves an email file with the PDF already attached: open it
     and Outlook shows a new email ready to address and send. Share > Email app saves the PDF and opens
     a new email in your email program; attach the PDF.
-  - Link: works once the web version is published (see About this app).
+  - Link: Share > Copy link makes a link to the web version that opens the plan for the person you
+    send it to (text only: photos, logos and scans stay out of the link). They can preview it and
+    download the PDF.
 
 
 SAVING AND OPENING
@@ -79,10 +84,12 @@ SAVING AND OPENING
 
 
 YOUR DATA
-  Everything stays on this computer. There is no login and nothing is uploaded.
+  Everything stays on this computer. There is no login and nothing is uploaded. Plans made in the web
+  version stay in that browser: move them between the web version and this file with Save and Open.
 
 
 VERSION HISTORY
+  1.0.4 (29 Oct 2026) Web version published (GitHub Pages); share links switched on.
   1.0.3 (28 Oct 2026) Appendix 2 ISO 45001:2018 certificate; Appendix 3 Project Risk Register and
                       Appendix 4 Environmental Impact Register printed in full on landscape pages and
                       editable per plan; updated incident investigation flowchart.

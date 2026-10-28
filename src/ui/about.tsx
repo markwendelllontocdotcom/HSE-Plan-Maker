@@ -87,6 +87,7 @@ export function About(props: { exportFolder: string | null; canPickFolder: boole
           <li>Every plan is autosaved in this browser about a second after each change and listed under My HSE Plans.</li>
           <li>Browser storage can be cleared, so save important plans as .hsep files as well.</li>
           <li>The app works offline: open <b>HSE Plan Maker.html</b> from the app folder.</li>
+          {WEB_LIVE && <li>Web version: <a href={WEB_URL} target="_blank" rel="noopener">{WEB_URL.replace('https://', '').replace(/\/$/, '')}</a>. In Edge or Chrome install it from the address bar; on iPhone and iPad use Share &gt; Add to Home Screen. Plans made in the web version stay in that browser: move them with Save and Open (.hsep files).</li>}
         </ul>
       </section>
 

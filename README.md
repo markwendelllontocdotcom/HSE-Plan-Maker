@@ -2,7 +2,23 @@
 
 Project Health, Safety & Environment Plan generator for Oxypro Electromechanical Work LLC projects. You fill in the project data (or import it from the Oxypro Project Library, a PQP Maker project or the Projects Master List), and export the HSE Plan as an editable Word file or a PDF. The standard text is the company sample *Project HSE Plan* (Rev 00, 26.06.2024), laid out in the same format as the Project Quality Plan made by PQP Maker.
 
+**Open the app: https://markwendelllontocdotcom.github.io/HSE-Plan-Maker/**
+
 Developed by Mark Lontoc | Dubai, United Arab Emirates | © 2026 MLWorks. All rights reserved.
+
+## Use it
+
+| Device | How |
+| --- | --- |
+| Windows / Mac (installed) | Open the web app in Edge or Chrome, then use **Install** in the address bar. It works offline after the first open. |
+| Windows / Mac (no install) | Double-click `HSE Plan Maker.html` (the single-file copy). It works with no internet. Plans saved in this copy stay in that browser. |
+| iPhone / iPad | Open the web app in Safari, then **Share > Add to Home Screen**. Use the home-screen app, not a Safari tab, so your plans are kept. |
+
+Your plans never leave the device: there is no login, no server and no upload. Only the app itself is loaded from GitHub Pages. A shared link carries the plan's text inside the link itself.
+
+## What the plan holds
+
+Cover with the Document No., Revision and Date boxes, Document Control page and Amendment Record (each plan is Rev 01 of the company sample), table of contents with the code of practice chapters, Sections 1 to 9, the four signed HSE policy statements, the incident investigation flowchart and the appendices: 1 HSE organization chart, 2 ISO 45001:2018 certificate, 3 Project Risk Register and 4 Environmental Impact Register (landscape pages, Oxypro RA form criteria), 5 Emergency Contact Numbers (optional).
 
 ## For developers
 
@@ -16,7 +32,7 @@ node tests/e2e.cjs <dir>         # Playwright smoke test of the single-file buil
 node tests/e2e-import.cjs <dir>  # import, plans list and shared-link flows
 ```
 
-- `src/content/hse.ts` is the standard text (sections 1–9, terms, warnings, appendices) with project tokens.
+- `src/content/hse.ts` is the standard text (sections 1–9, terms, warnings, appendices) with project tokens; `src/content/registers.ts` the risk criteria and the standard rows of the two registers.
 - `src/content/build.ts` turns a plan and the standard text into one document model (cover, Document Control page, table of contents, body).
 - `src/gen/docx.ts` writes the Word file (R1 styles, section numbering, PAGEREF fields in the table of contents); `src/gen/pdf.ts` writes the PDF with pdfmake in two passes (the second prints the page ranges).
 - `src/importers.ts` reads Library / PQP Maker files and links and the Projects Master List workbook; `src/share.ts` makes the email draft and the share link.
@@ -24,4 +40,4 @@ node tests/e2e-import.cjs <dir>  # import, plans list and shared-link flows
 
 ## Copyright
 
-© 2026 MLWorks. All rights reserved. The HSE Plan text, Oxypro logo and the signed policy statements are Oxypro company material.
+© 2026 MLWorks. All rights reserved. The HSE Plan text, Oxypro logo, the signed policy statements, the ISO 45001 certificate and the risk assessment master reference are Oxypro company material.

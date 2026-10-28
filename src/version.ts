@@ -1,15 +1,23 @@
 export const APP_NAME = 'HSE Plan Maker';
-export const APP_VERSION = '1.0.3';
-export const APP_DATE = '28 Oct 2026';
+export const APP_VERSION = '1.0.4';
+export const APP_DATE = '29 Oct 2026';
 /** Web address of the installable version (GitHub Pages). WEB_LIVE turns on share links once it is published. */
-export const WEB_URL = 'https://markwendelllontocdotcom.github.io/MEP-HSE-Plan-Maker/';
-export const WEB_LIVE = false;
+export const WEB_URL = 'https://markwendelllontocdotcom.github.io/HSE-Plan-Maker/';
+export const WEB_LIVE = true;
 export const PQP_URL = 'https://markwendelllontocdotcom.github.io/MEP-PQP-Maker/';
 export const CREDIT = 'Developed by Mark Lontoc | Dubai, United Arab Emirates | © 2026 MLWorks. All rights reserved.';
 export const VERSION_LINE = `Version ${APP_VERSION} (${APP_DATE})`;
 
 /** Version history shown in the About panel (newest first). Keep README.txt in step. */
 export const CHANGES: { v: string; date: string; items: string[] }[] = [
+  {
+    v: '1.0.4',
+    date: '29 Oct 2026',
+    items: [
+      'Web version at markwendelllontocdotcom.github.io/HSE-Plan-Maker: open it in Edge or Chrome and install it from the address bar, or on iPhone and iPad use Share > Add to Home Screen. It works offline after the first open.',
+      'Share > Copy link now works: the person you send it to opens the plan in the web version, previews it and downloads the PDF (text only: photos, logos and scans stay out of the link).',
+    ],
+  },
   {
     v: '1.0.3',
     date: '28 Oct 2026',
