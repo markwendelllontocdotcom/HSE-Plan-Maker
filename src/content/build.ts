@@ -370,7 +370,8 @@ export async function buildDoc(p: Project, s: Settings, plat: Platform): Promise
   const photo = p.R10 ? addImg(await plat.dataUrlToAsset(p.R10.dataUrl), 'cover') : null;
   const logos: string[] = [];
   for (const im of [p.R07, p.R08]) if (im) logos.push(addImg(await plat.dataUrlToAsset(im.dataUrl)));
-  const ms = (x: string, ph: string) => 'M/s. ' + (stripMs(x) || ph);
+  // party names print as typed, without "M/s." (user request 28 Oct 2026); an M/s. typed into a name is removed too
+  const ms = (x: string, ph: string) => stripMs(x) || ph;
   const cover = {
     boxes: [['Document No.', docNo], ['Revision', rev], ['Date', date]] as [string, string][],
     title: TITLE,

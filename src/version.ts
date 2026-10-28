@@ -1,5 +1,5 @@
 export const APP_NAME = 'HSE Plan Maker';
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.0.1';
 export const APP_DATE = '28 Oct 2026';
 /** Web address of the installable version (GitHub Pages). WEB_LIVE turns on share links once it is published. */
 export const WEB_URL = 'https://markwendelllontocdotcom.github.io/MEP-HSE-Plan-Maker/';
@@ -10,6 +10,11 @@ export const VERSION_LINE = `Version ${APP_VERSION} (${APP_DATE})`;
 
 /** Version history shown in the About panel (newest first). Keep README.txt in step. */
 export const CHANGES: { v: string; date: string; items: string[] }[] = [
+  {
+    v: '1.0.1',
+    date: '28 Oct 2026',
+    items: ['No "M/s." in the plan: the client, consultant, main contractor and MEP contractor print as typed on the cover and in Terms & Definitions. An "M/s." typed in front of a name is left out too.'],
+  },
   {
     v: '1.0.0',
     date: '28 Oct 2026',

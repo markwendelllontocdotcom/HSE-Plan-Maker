@@ -1,5 +1,5 @@
 HSE PLAN MAKER - User guide
-Version 1.0.0 (28 Oct 2026)
+Version 1.0.1 (28 Oct 2026)
 
 Developed by Mark Lontoc | Dubai, United Arab Emirates | (c) 2026 MLWorks. All rights reserved.
 
@@ -72,4 +72,5 @@ YOUR DATA
 
 
 VERSION HISTORY
+  1.0.1 (28 Oct 2026) No "M/s." in the plan: party names print as typed.
   1.0.0 (28 Oct 2026) First release.

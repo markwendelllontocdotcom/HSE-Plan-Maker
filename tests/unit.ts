@@ -44,6 +44,7 @@ ok(txt.includes('is attached in Appendix 1 of this project HSE plan'), 'appendix
 ok(txt.includes('section 7.2 of this plan'), 'section reference in 5.1');
 ok(txt.includes('approved by Dubai Municipality'), 'lifting authority for Dubai');
 ok(txt.includes('500 AED'), 'award amount');
+ok(!JSON.stringify(m).includes('M/s') && m.cover.parties.find((x) => x[0] === 'Client')![1] === 'Sample Developer LLC', 'no M/s. in the plan');
 ok(m.cover.boxes.map((b) => b[1]).join('|') === 'OPEM-DXB-101-HS-PLN-001|00|28.10.2026', 'cover boxes');
 ok(m.footerLeft === 'OPEM-DXB-101-HS-PLN-001  |  Rev.00  |  28.10.2026', 'footer');
 const blank = await buildDoc({ ...t, D01: '', D03: '', D04: '' }, s, nodePlatform);

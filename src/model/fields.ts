@@ -50,7 +50,7 @@ export const FIELDS: FieldSpec[] = [
   { id: 'P08', group: 'project', label: 'Disciplines', type: 'multi', mandatory: false, options: DISCIPLINES, usedIn: '3 Scope of MEP Works' },
   { id: 'P13', group: 'project', label: 'Building Configuration / Description', type: 'longtext', mandatory: false, max: 500, help: 'e.g. B+G+20+R, built-up area', usedIn: '3 Scope of MEP Works' },
 
-  { id: 'R01', group: 'parties', label: 'Client / Employer', type: 'text', mandatory: true, help: 'Enter the name without "M/s." (the cover adds it)', usedIn: 'Cover, 4 Terms & Definitions' },
+  { id: 'R01', group: 'parties', label: 'Client / Employer', type: 'text', mandatory: true, help: 'Printed as typed, without "M/s."', usedIn: 'Cover, 4 Terms & Definitions' },
   { id: 'R02', group: 'parties', label: 'Lead Consultant', type: 'text', mandatory: true, usedIn: 'Cover, 4 Terms & Definitions' },
   { id: 'R02m', group: 'parties', label: 'MEP Consultant', type: 'text', mandatory: false, help: 'Only when different from the Lead Consultant', usedIn: '4 Terms & Definitions' },
   { id: 'R03', group: 'parties', label: 'Main Contractor', type: 'text', mandatory: true, usedIn: 'Cover, 4 Terms & Definitions' },
