@@ -1,5 +1,5 @@
 export const APP_NAME = 'HSE Plan Maker';
-export const APP_VERSION = '1.0.5';
+export const APP_VERSION = '1.0.6';
 export const APP_DATE = '29 Oct 2026';
 /** Web address of the installable version (GitHub Pages). WEB_LIVE turns on share links once it is published. */
 export const WEB_URL = 'https://markwendelllontocdotcom.github.io/HSE-Plan-Maker/';
@@ -10,6 +10,14 @@ export const VERSION_LINE = `Version ${APP_VERSION} (${APP_DATE})`;
 
 /** Version history shown in the About panel (newest first). Keep README.txt in step. */
 export const CHANGES: { v: string; date: string; items: string[] }[] = [
+  {
+    v: '1.0.6',
+    date: '29 Oct 2026',
+    items: [
+      'HSE plans are kept in HSE Plan Maker\'s own storage on the device. Before, HSE Plan Maker and PQP Maker opened in the same browser shared one storage, so My HSE Plans could list PQP projects. Plans made before move across by themselves the first time this version opens; PQP Maker\'s projects stay with PQP Maker.',
+      'The web address opens the app whichever folder GitHub Pages is set to.',
+    ],
+  },
   {
     v: '1.0.5',
     date: '29 Oct 2026',

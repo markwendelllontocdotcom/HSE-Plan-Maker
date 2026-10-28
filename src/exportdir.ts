@@ -1,4 +1,9 @@
-import { get, set, del } from 'idb-keyval';
+import { get as kget, set as kset, del as kdel } from 'idb-keyval';
+import { db } from './storage';
+
+const get = (k: string) => kget(k, db);
+const set = (k: string, v: any) => kset(k, v, db);
+const del = (k: string) => kdel(k, db);
 
 /**
  * Export folder: on Windows and macOS (Edge / Chrome) the user picks a folder once, for example the

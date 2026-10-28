@@ -15,10 +15,14 @@
     <link rel="icon" href="./favicon-16.png?v=100" type="image/png" sizes="16x16" />
     <link rel="apple-touch-icon" href="./icon-180.png?v=100" />
     <title>HSE Plan Maker</title>
-    <script type="module" crossorigin src="./assets/index-Dw7Jxxay.js"></script>
+    <script type="module" crossorigin src="./assets/index-BdtVaDK6.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-D_-sX9hk.css">
   <link rel="manifest" href="./manifest.webmanifest"></head>
   <body>
     <div id="app"></div>
+    <script>
+      // GitHub Pages set to the repository root serves this source page: the built app is in docs/ (the hash keeps shared links)
+      if (/github\.io$/.test(location.hostname) && document.querySelector('script[src="/src/main.tsx"]')) location.replace('docs/' + location.search + location.hash);
+    </script>
   </body>
 </html>

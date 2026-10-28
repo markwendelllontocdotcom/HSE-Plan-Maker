@@ -1,7 +1,7 @@
 {
   "name": "hse-plan-maker",
   "private": true,
-  "version": "1.0.5",
+  "version": "1.0.6",
   "type": "module",
   "description": "HSE Plan Maker - Project Health, Safety & Environment Plan generator (PWA). Developed by Mark Lontoc | Dubai, United Arab Emirates | (c) 2026 MLWorks. All rights reserved.",
   "scripts": {

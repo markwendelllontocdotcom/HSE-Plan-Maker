@@ -19,5 +19,9 @@
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // GitHub Pages set to the repository root serves this source page: the built app is in docs/ (the hash keeps shared links)
+      if (/github\.io$/.test(location.hostname) && document.querySelector('script[src="/src/main.tsx"]')) location.replace('docs/' + location.search + location.hash);
+    </script>
   </body>
 </html>

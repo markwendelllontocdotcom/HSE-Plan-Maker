@@ -1,5 +1,5 @@
 HSE PLAN MAKER - User guide
-Version 1.0.5 (29 Oct 2026)
+Version 1.0.6 (29 Oct 2026)
 
 Developed by Mark Lontoc | Dubai, United Arab Emirates | (c) 2026 MLWorks. All rights reserved.
 
@@ -91,6 +91,8 @@ YOUR DATA
 
 
 VERSION HISTORY
+  1.0.6 (29 Oct 2026) Plans kept in HSE Plan Maker's own storage (no more PQP projects in My HSE Plans);
+                      the web address works with GitHub Pages set to the root or to docs.
   1.0.5 (29 Oct 2026) Web version published (GitHub Pages); share links switched on.
   1.0.4 (29 Oct 2026) The Project Library's HSE file brings the project details, the MEP Consultant
                       and the cover photo chosen in the Library.

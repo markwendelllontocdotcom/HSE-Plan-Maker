@@ -5,7 +5,7 @@ import { FIELDS, GROUPS, fieldError, allErrors, missingMandatory, emptyBoxes, ty
 import { defaultSettings, newProject, testProject, migrate, sanitize, uid, codeForEmirate, chaptersFor, codeHeading } from './model/defaults';
 import { outputBaseName, projectCode, PLAN_EXT } from './model/format';
 import { sectionUnits, numbering } from './content/build';
-import { store, type PlanInfo } from './storage';
+import { store, moveFromShared, type PlanInfo } from './storage';
 import { saveProjectFile, pickFile, parsePlanFile, download, type Handle } from './files';
 import { parseProjectText, readLibraryLink, readMasterList, applyImport, isBlankPlan, hasLibraryHash, hasShareHash, IMPORT_LABELS, type Incoming, type MasterRow } from './importers';
 import { exportWord, exportPdf, pdfFor, deliver, type PdfEntry } from './exporter';
@@ -66,6 +66,7 @@ export function App() {
   // ---------------- load
   useEffect(() => {
     (async () => {
+      await moveFromShared(); // once: plans kept by 1.0.5 and earlier move to HSE Plan Maker's own database
       const s = { ...defaultSettings(), ...((await store.loadSettings()) || {}) };
       setSettings(s);
       const id = await store.loadCurrentId();
