@@ -418,7 +418,7 @@ export function App() {
       case 'number': ctl = <TextInput id={id} value={v || ''} numeric onInput={(x) => set(f.id, x.trim())} />; break;
       case 'longtext': ctl = <TextArea id={id} value={v || ''} max={f.max} onInput={(x) => set(f.id, x)} rows={4} />; wide = true; break;
       case 'dmy': ctl = <DmyInput id={id} value={v || ''} onInput={(x) => set(f.id, x)} />; break;
-      case 'docbox': ctl = <DocBox docNo={p.D01} rev={p.D03} date={p.D04} onChange={(k, x) => set(k, x)} hint={`e.g. OPEM-${projectCode(p) || 'DXB-243'}-HSE-PLN-001`} />; wide = true; break;
+      case 'docbox': ctl = <DocBox docNo={p.D01} rev={p.D03} date={p.D04} onChange={(k, x) => set(k, x)} hint={`e.g. OPEM-${projectCode(p) || 'DXB-243'}-HS-PLN-001`} />; wide = true; break;
       case 'dropdown': ctl = <Select id={id} value={v || ''} options={f.options!} onChange={(x) => set(f.id, x)} />; break;
       case 'multi': ctl = <Multi id={id} value={v || []} options={f.options!} onChange={(x) => set(f.id, x)} />; wide = true; break;
       case 'toggle': ctl = <Toggle id={id} value={!!v} onChange={(x) => set(f.id, x)} label={v ? 'Shown on every page' : 'Hidden'} />; break;
