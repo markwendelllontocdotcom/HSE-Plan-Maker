@@ -98,6 +98,32 @@ const fx = (f) => path.resolve('tests/fixtures/' + f);
   await page.click('.dialog button:has-text("Open the plan")');
   await page.waitForSelector('#sheet-title:has-text("Review")');
   check('shared title', await page.textContent('.tb .v'), 'Shared Link Tower');
+
+  // Library: Open in HSE Plan Maker (text in the link, photo by paste)
+  const lib = await page.evaluate(async () => {
+    const file = { format: 'pqp-maker-project', version: 1, source: { library: 'P122', for: 'HSE Plan Maker', photo: 'clipboard' }, project: { P01: 'Paste Photo Tower', P02: 'DXB-243', P04: 'Dubai', R01: 'Sample Client', R02: 'Sample Consultant', R03: 'Sample MC' } };
+    const z = new Uint8Array(await new Response(new Blob([JSON.stringify(file)]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());
+    let s = ''; z.forEach((b) => (s += String.fromCharCode(b)));
+    return '#library=' + btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  });
+  await page.goto(url + lib);
+  await page.waitForSelector('#dlg-title');
+  await page.click('.dialog button:has-text("Start a new plan")');
+  await page.waitForSelector('#dlg-title:has-text("Cover photo from the Project Library")');
+  await page.screenshot({ path: out + '/paste-ask.png' });
+  await page.evaluate(async () => {
+    const c = document.createElement('canvas'); c.width = 1200; c.height = 800;
+    const g = c.getContext('2d'); g.fillStyle = '#3a7bd5'; g.fillRect(0, 0, 1200, 800); g.fillStyle = '#ffcc00'; g.fillRect(300, 200, 600, 400);
+    const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
+    const dt = new DataTransfer(); dt.items.add(new File([blob], 'image.png', { type: 'image/png' }));
+    document.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }));
+  });
+  await page.waitForSelector('.toast:has-text("Cover photo added")');
+  await page.click('.navitem:has-text("2. Project Parties")');
+  const cover = await page.evaluate(() => [...document.querySelectorAll('.imgpick .thumb img')].map((i) => i.src.slice(0, 23) + ':' + i.src.length));
+  check('pasted cover photo', String(cover.some((x) => x.startsWith('data:image/jpeg;base64') && +x.split(':').pop() > 5000)), 'true');
+  await page.click('.navitem:has-text("1. Project Information")');
+  check('link P01', await val('P01'), 'Paste Photo Tower');
   console.log('errors', errors);
   await browser.close();
   if (errors.length) process.exit(1);

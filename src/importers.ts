@@ -225,6 +225,19 @@ export async function readMasterList(bytes: Uint8Array | ArrayBuffer): Promise<M
   throw new Error('No projects were found. Choose the "Oxypro - Projects Master List" workbook (sheet OXYPRO PROJECT MASTER CASE, headers on row 3).');
 }
 
+/** The cover photo pasted after Open in HSE Plan Maker in the Library (the link carries the text only): JPEG, at most 2000 px. */
+export async function coverFromBlob(b: Blob, projectName: string): Promise<ImageData> {
+  const url = URL.createObjectURL(b);
+  try {
+    const img = await new Promise<HTMLImageElement>((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('This is not a photo the app can read.')); i.src = url; });
+    const k = Math.min(1, 2000 / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    const g = c.getContext('2d')!; g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, c.width, c.height); g.imageSmoothingQuality = 'high'; g.drawImage(img, 0, 0, c.width, c.height);
+    const base = (projectName || 'Project').replace(/[\\/:*?"<>|]+/g, '-').trim().slice(0, 80);
+    return { name: `${base} - Cover Photo.jpg`, type: 'image/jpeg', dataUrl: c.toDataURL('image/jpeg', 0.86), w: c.width, h: c.height };
+  } finally { URL.revokeObjectURL(url); }
+}
+
 /** Lays imported project details over a plan. A plan already started keeps its own photo and logos unless the import brings them. */
 export function applyImport(base: Project, f: Partial<Project>): Project {
   const n: any = { ...base, modified: new Date().toISOString() };

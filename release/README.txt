@@ -1,5 +1,5 @@
 HSE PLAN MAKER - User guide
-Version 1.0.6 (29 Oct 2026)
+Version 1.0.7 (29 Oct 2026)
 
 Developed by Mark Lontoc | Dubai, United Arab Emirates | (c) 2026 MLWorks. All rights reserved.
 
@@ -32,7 +32,8 @@ MAKING AN HSE PLAN
   1. My HSE Plans lists every plan on this computer with Preview, Word and PDF buttons.
      Click New plan, or Import project to fill the project details from:
        - the Oxypro Project Library: open the project and click HSE, choose the cover photo, then
-         "Save HSE Plan file" (or "Open in HSE Plan Maker", which opens the web version directly).
+         "Save HSE Plan file" (or "Open in HSE Plan Maker", which opens the web version directly:
+         the cover photo is copied, so press Ctrl+V or click Paste photo when it asks).
          The file saved under QA/QC > "PQP details and file" (.pqp.json) works too. Open takes
          these files as well;
        - a PQP Maker project (.pqp), so the HSE Plan uses the same details as the PQP;
@@ -91,6 +92,7 @@ YOUR DATA
 
 
 VERSION HISTORY
+  1.0.7 (29 Oct 2026) Open in HSE Plan Maker from the Library: the cover photo comes by paste (Ctrl+V).
   1.0.6 (29 Oct 2026) Plans kept in HSE Plan Maker's own storage (no more PQP projects in My HSE Plans);
                       the web address works with GitHub Pages set to the root or to docs.
   1.0.5 (29 Oct 2026) Web version published (GitHub Pages); share links switched on.

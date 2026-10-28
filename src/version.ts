@@ -1,5 +1,5 @@
 export const APP_NAME = 'HSE Plan Maker';
-export const APP_VERSION = '1.0.6';
+export const APP_VERSION = '1.0.7';
 export const APP_DATE = '29 Oct 2026';
 /** Web address of the installable version (GitHub Pages). WEB_LIVE turns on share links once it is published. */
 export const WEB_URL = 'https://markwendelllontocdotcom.github.io/HSE-Plan-Maker/';
@@ -10,6 +10,13 @@ export const VERSION_LINE = `Version ${APP_VERSION} (${APP_DATE})`;
 
 /** Version history shown in the About panel (newest first). Keep README.txt in step. */
 export const CHANGES: { v: string; date: string; items: string[] }[] = [
+  {
+    v: '1.0.7',
+    date: '29 Oct 2026',
+    items: [
+      'From the Oxypro Project Library: HSE > Open in HSE Plan Maker opens this app with the project details. The cover photo you chose there is copied: press Ctrl+V or click Paste photo when HSE Plan Maker asks for it (the same as PQP Maker).',
+    ],
+  },
   {
     v: '1.0.6',
     date: '29 Oct 2026',

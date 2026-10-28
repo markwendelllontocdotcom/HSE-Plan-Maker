@@ -7,7 +7,7 @@ import { outputBaseName, projectCode, PLAN_EXT } from './model/format';
 import { sectionUnits, numbering } from './content/build';
 import { store, moveFromShared, type PlanInfo } from './storage';
 import { saveProjectFile, pickFile, parsePlanFile, download, type Handle } from './files';
-import { parseProjectText, readLibraryLink, readMasterList, applyImport, isBlankPlan, hasLibraryHash, hasShareHash, IMPORT_LABELS, type Incoming, type MasterRow } from './importers';
+import { parseProjectText, readLibraryLink, readMasterList, applyImport, isBlankPlan, hasLibraryHash, hasShareHash, coverFromBlob, IMPORT_LABELS, type Incoming, type MasterRow } from './importers';
 import { exportWord, exportPdf, pdfFor, deliver, type PdfEntry } from './exporter';
 import { printPdf, openPdfTab, isIOS } from './print';
 import { canShareFile, shareFile, emlDraft, mailSubject, mailBody, shareLink, readShareHash } from './share';
@@ -60,6 +60,9 @@ export function App() {
   // a link (#library= or #hse=) is handled once the plan is loaded, by the latest render's handler
   const pendingHash = useRef('');
   const recv = useRef<(hash: string) => void>(() => {});
+  // Open in HSE Plan Maker (Library): the cover photo chosen there is on the clipboard, waiting to be pasted
+  const photoWait = useRef<string | null>(null);
+  const takeCover = useRef<(b: Blob) => void>(() => {});
 
   const refreshPlans = async () => setPlans(await store.listPlans());
 
@@ -88,6 +91,19 @@ export function App() {
   useEffect(() => {
     if (p && pendingHash.current) { const h = pendingHash.current; pendingHash.current = ''; recv.current(h); }
   }, [p]);
+  // Ctrl+V while the Library's cover photo is waiting
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      if (photoWait.current == null) return;
+      const item = [...(e.clipboardData?.items || [])].find((i) => i.kind === 'file' && i.type.startsWith('image/'));
+      const file = item?.getAsFile();
+      if (!file) return;
+      e.preventDefault();
+      takeCover.current(file);
+    };
+    document.addEventListener('paste', onPaste, true);
+    return () => document.removeEventListener('paste', onPaste, true);
+  }, []);
 
   // ---------------- autosave
   useEffect(() => {
@@ -230,6 +246,35 @@ export function App() {
   const planById = async (id: string): Promise<Project | null> => (id === p.id ? p : ((x) => (x ? migrate(x, settings) : null))(await store.loadProject(id)));
 
   // ---------------- imports
+  /** The cover photo chosen in the Library arrives by paste (Ctrl+V or Paste photo). */
+  async function takeCoverPhoto(b: Blob) {
+    try {
+      const img = await coverFromBlob(b, photoWait.current || '');
+      photoWait.current = null;
+      setP((old) => (old ? { ...old, R10: img, modified: new Date().toISOString() } : old));
+      setDirtyFile(true); setDialog(null);
+      setToast('Cover photo added from the Project Library');
+    } catch (e: any) { setToast(e?.message || 'The photo could not be added.'); }
+  }
+  takeCover.current = takeCoverPhoto;
+  function askCoverPhoto(name: string, hadPhoto: boolean) {
+    photoWait.current = name;
+    const paste = async () => {
+      try {
+        const items = await (navigator.clipboard as any).read();
+        for (const it of items) { const t = (it.types as string[]).find((x) => x.startsWith('image/')); if (t) return takeCoverPhoto(await it.getType(t)); }
+        setToast('There is no photo on the clipboard. Choose the photo again in the Library, or add it under 2. Project Parties.');
+      } catch { setToast('The browser did not allow reading the clipboard. Press Ctrl+V (⌘V on a Mac) instead.'); }
+    };
+    setDialog({
+      title: 'Cover photo from the Project Library',
+      body: <><p>The cover photo you chose in the Library is copied. Press <b>Ctrl+V</b> (⌘V on a Mac) to add it, or click <b>Paste photo</b>.</p>{hadPhoto && <p class="muted">It replaces the cover photo this plan has now.</p>}</>,
+      actions: [
+        { label: 'Skip', run: () => { photoWait.current = null; setDialog(null); } },
+        { label: 'Paste photo', primary: true, run: paste },
+      ],
+    });
+  }
   function incoming(inc: Incoming, cur: Project, s: Settings) {
     const f = inc.fields;
     const name = f.P01 || f.P02 || 'the project';
@@ -238,6 +283,7 @@ export function App() {
       if (fresh) switchTo(n, { dirty: true }); else { setP(n); setDirtyFile(true); }
       setImportOpen(false); setMaster(null); setDialog(null); setGroup('review'); window.scrollTo({ top: 0 });
       setToast(msg);
+      if (inc.photo && !f.R10) askCoverPhoto(f.P01 || '', !!n.R10);
     };
     const create = () => take(migrate(applyImport({ ...newProject(s) }, f), s), `HSE Plan started from ${inc.source}: ${name}. Fill in the fields marked on the left.`, true);
     const update = () => take(migrate(applyImport(cur, f), s), `${name}: project details updated from ${inc.source}`, false);
