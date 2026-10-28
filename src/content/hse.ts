@@ -4,7 +4,7 @@
  * kept; spelling slips and the numbering errors of the sample are corrected (see CORRECTIONS below).
  *
  * Tokens: {{CO}} company short name (Oxypro), {{COMPANY}} full company name, {{PROJECT}} project name,
- * {{APP:org}} / {{APP:risk}} / {{APP:env}} appendix numbers, {{T02}} permit notice hours.
+ * {{ORGREF}} Appendix 1 reference, {{ISOCERT}} the ISO 45001 sentence (Appendix 2), {{T02}} permit notice hours.
  */
 
 export type Item = string | { t: string; sub?: string[] };
@@ -54,7 +54,7 @@ export const SECTIONS: Sec[] = [
       { slot: 'terms' },
     ],
   },
-  { id: 's5', level: 1, title: 'HSE Management Systems & Commitments', dubai: 'N/A', body: [] },
+  { id: 's5', level: 1, title: 'HSE Management Systems & Commitments', dubai: 'N/A', body: ['{{ISOCERT}}'] },
   {
     id: 's5.1', level: 2, parent: 's5', title: 'Leadership & Commitment', dubai: 'N/A',
     body: [
@@ -615,8 +615,9 @@ export const SECTIONS: Sec[] = [
 ];
 
 /** Appendices (one page each, after Section 9). */
-export const APPENDICES: { id: string; key: 'org' | 'risk' | 'env' | 'contacts'; title: string; added?: boolean }[] = [
+export const APPENDICES: { id: string; key: 'org' | 'iso' | 'risk' | 'env' | 'contacts'; title: string; added?: boolean }[] = [
   { id: 'app:org', key: 'org', title: 'Project HSE Organization Chart' },
+  { id: 'app:iso', key: 'iso', title: 'ISO 45001:2018 Certificate' },
   { id: 'app:risk', key: 'risk', title: 'Project Risk Register' },
   { id: 'app:env', key: 'env', title: 'Environmental Impact Register' },
   { id: 'app:contacts', key: 'contacts', title: 'Emergency Contact Numbers', added: true },
@@ -701,5 +702,6 @@ export const CORRECTIONS = [
   'Section 9: 9.1 HSE Objectives, 9.2 HSE Targets and 9.3 Employee of the Month Award Scheme, as in the sample body.',
   'The sample’s placeholders (XXXXXX, Emaar Golf Heights) are replaced by the project name; Terms & Definitions rows 1–4 by the project parties.',
   'Wording: "Only the most dedicated and talented employees" (9.3, a word was missing in the sample); 8.14 and 8.19 sentences completed.',
+  'Added in this revision: Appendix 2, the ISO 45001:2018 certificate, referred to in Section 5; the Project Risk Register (Appendix 3) and the Environmental Impact Register (Appendix 4) printed in full, with the Oxypro risk criteria.',
   'Spelling: committed, activities, limited, responsibilities, interrelationship, occurrence, evaluation, employment, similar, Asset, Equipment, Working at Height, Personal Protective Equipment, Mobile Elevating Work Platforms.',
 ];

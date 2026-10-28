@@ -1,11 +1,12 @@
 import type { Project } from './types';
 import { EMIRATES, DISCIPLINES, ROLES, STATUSES, LEGISLATION, LEGISLATION_EXTRA, SWP, HSES, COMPETENCE, OBJECTIVES, TARGETS } from './defaults';
 import { parseDMY, PROJECT_CODE, PROJECT_CODE_MAX } from './format';
+import { score, band } from '../content/registers';
 
 export type FieldType =
   | 'text' | 'longtext' | 'number' | 'dmy' | 'dropdown' | 'multi' | 'image' | 'images'
   | 'person' | 'persons' | 'people' | 'revisions' | 'toggle' | 'sections'
-  | 'lines' | 'permits' | 'contacts' | 'policies' | 'code' | 'docbox';
+  | 'lines' | 'permits' | 'contacts' | 'policies' | 'code' | 'docbox' | 'regmode' | 'risks' | 'envs';
 
 export interface FieldSpec {
   id: keyof Project | string;
@@ -27,6 +28,7 @@ export interface FieldSpec {
   extra?: string[];  // optional lines that can be added with one click
   numbered?: boolean;
   personMax?: number;
+  showIf?: (p: Project) => boolean; // shown (and checked) only when this is true
 }
 
 export const GROUPS = [
@@ -98,11 +100,21 @@ export const FIELDS: FieldSpec[] = [
 
   { id: 'POL', group: 'policies', label: 'Policy statements', type: 'policies', mandatory: false, help: 'Each ticked policy is printed on its own page in Section 6. The four signed Oxypro policies (Rev.00, 28.02.2024) are built in; add a newer scan to replace one.', usedIn: '6 HSE Policy Statements' },
 
-  { id: 'A02', group: 'appendix', section: 'Appendix 2: Project Risk Register', label: 'Risk Register pages (scans or screenshots)', type: 'images', mandatory: false, maxMB: 5, usedIn: 'Appendix 2' },
-  { id: 'A02ref', group: 'appendix', label: 'Risk Register reference (when attached separately)', type: 'text', mandatory: false, max: 80, placeholder: 'e.g. OPEM-DXB-243-HS-RR-001', usedIn: 'Appendix 2' },
-  { id: 'A03', group: 'appendix', section: 'Appendix 3: Environmental Impact Register', label: 'Environmental Impact Register pages', type: 'images', mandatory: false, maxMB: 5, usedIn: 'Appendix 3' },
-  { id: 'A03ref', group: 'appendix', label: 'Environmental Impact Register reference (when attached separately)', type: 'text', mandatory: false, max: 80, usedIn: 'Appendix 3' },
-  { id: 'E01', group: 'appendix', section: 'Emergency Contact Numbers (added, switch on under Plan Sections)', label: 'Emergency contacts', type: 'contacts', mandatory: false, usedIn: 'Appendix 4 (when switched on)' },
+  { id: 'I01', group: 'appendix', section: 'Appendix 2: ISO 45001:2018 Certificate', label: 'Certificate', type: 'image', mandatory: false, maxMB: 5, help: 'The Oxypro certificate (TUV Apex, current issue 26.02.2026) is built in. When it is renewed, add the new scan here and update the details below.', usedIn: 'Appendix 2' },
+  { id: 'I01no', group: 'appendix', label: 'Certificate No.', type: 'text', mandatory: false, max: 40, usedIn: '5 HSE Management Systems & Commitments' },
+  { id: 'I01by', group: 'appendix', label: 'Certification body', type: 'text', mandatory: false, max: 120, usedIn: '5 HSE Management Systems & Commitments' },
+  { id: 'I01exp', group: 'appendix', label: 'Certificate expiry', type: 'dmy', mandatory: false, help: 'As printed on the certificate. A plan dated after it is flagged, so the renewed certificate goes in.', usedIn: 'Checks' },
+
+  { id: 'A02mode', group: 'appendix', section: 'Appendix 3: Project Risk Register', label: 'After the two standard sentences, Appendix 3 prints', type: 'regmode', mandatory: false, usedIn: 'Appendix 3' },
+  { id: 'RR', group: 'appendix', label: 'Project Risk Register', type: 'risks', mandatory: false, showIf: (p) => p.A02mode === 'register', help: 'From the Oxypro MEP Risk Assessment Master Reference (OXY-QHSE-RA-GEN-001) with the heat stress step. Ratings use the Oxypro RA form: Score = L × S; 1–4 LOW, 5–12 MEDIUM, 15–25 HIGH. Printed on landscape pages.', usedIn: 'Appendix 3' },
+  { id: 'A02', group: 'appendix', label: 'Risk Register pages (scans or screenshots)', type: 'images', mandatory: false, maxMB: 5, showIf: (p) => p.A02mode === 'scans', usedIn: 'Appendix 3' },
+  { id: 'A02ref', group: 'appendix', label: 'Risk Register reference', type: 'text', mandatory: false, max: 80, placeholder: 'e.g. OPEM-DXB-243-HS-RR-001', help: 'Optional. Printed after the register name in the first sentence and in the register heading.', usedIn: 'Appendix 3' },
+
+  { id: 'A03mode', group: 'appendix', section: 'Appendix 4: Environmental Impact Register', label: 'After the two standard sentences, Appendix 4 prints', type: 'regmode', mandatory: false, usedIn: 'Appendix 4' },
+  { id: 'ER', group: 'appendix', label: 'Environmental Impact Register', type: 'envs', mandatory: false, showIf: (p) => p.A03mode === 'register', help: 'Environmental aspects of MEP works (plan Section 8.29, RA master step 31). Score = L × S; 8 or more is a significant aspect. Printed on landscape pages.', usedIn: 'Appendix 4' },
+  { id: 'A03', group: 'appendix', label: 'Environmental Impact Register pages', type: 'images', mandatory: false, maxMB: 5, showIf: (p) => p.A03mode === 'scans', usedIn: 'Appendix 4' },
+  { id: 'A03ref', group: 'appendix', label: 'Environmental Impact Register reference', type: 'text', mandatory: false, max: 80, placeholder: 'e.g. OPEM-DXB-243-HS-EIR-001', help: 'Optional, as for the Risk Register.', usedIn: 'Appendix 4' },
+  { id: 'E01', group: 'appendix', section: 'Emergency Contact Numbers (added, switch on under Plan Sections)', label: 'Emergency contacts', type: 'contacts', mandatory: false, usedIn: 'Appendix 5 (when switched on)' },
 
   { id: 'R09', group: 'branding', label: 'Company Logo', type: 'image', mandatory: false, maxMB: 2, help: 'Empty uses the Oxypro logo', usedIn: 'Header' },
   { id: 'R11', group: 'branding', label: 'Header Tagline', type: 'text', mandatory: false, max: 60, usedIn: 'Header' },
@@ -113,10 +125,43 @@ export const FIELDS: FieldSpec[] = [
 ];
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ymd = (dmy: string) => dmy.split('.').reverse().join('');
+const firstOf = (list: string[]) => (list.length ? list[0] + (list.length > 1 ? ` (${list.length - 1} more to check)` : '') : null);
+
+/** Problems in the Project Risk Register rows (shown on the field and counted on the group). */
+export function riskIssues(rows: Project['RR']): string[] {
+  const out: string[] = [];
+  rows.forEach((r, i) => {
+    const n = `Row ${String(i + 1).padStart(2, '0')}`;
+    if (!r.activity.trim()) out.push(`${n}: type the activity or task step.`);
+    if (!r.L || !r.S || !r.L2 || !r.S2) { out.push(`${n}: rate the likelihood and severity, before and after the controls.`); return; }
+    const a = score(r.L, r.S), b = score(r.L2, r.S2);
+    if (band(b)?.key === 'HIGH') out.push(`${n}: the residual risk is HIGH (${b}). Add controls until it is MEDIUM or LOW.`);
+    else if (b > a) out.push(`${n}: the residual risk (${b}) is higher than the initial risk (${a}).`);
+    if (!r.controls.trim()) out.push(`${n}: list the control measures.`);
+  });
+  return out;
+}
+/** Problems in the Environmental Impact Register rows. */
+export function envIssues(rows: Project['ER']): string[] {
+  const out: string[] = [];
+  rows.forEach((r, i) => {
+    const n = `Row ${String(i + 1).padStart(2, '0')}`;
+    if (!r.aspect.trim()) out.push(`${n}: type the environmental aspect.`);
+    if (!r.L || !r.S) out.push(`${n}: rate the likelihood and severity.`);
+    if (!r.controls.trim()) out.push(`${n}: list the control measures.`);
+  });
+  return out;
+}
 
 /** Returns an error message for an entry that is not allowed (format / range), or null. */
 export function fieldError(f: FieldSpec, p: Project): string | null {
   const v: any = (p as any)[f.id];
+  if (f.showIf && !f.showIf(p)) return null;
+  if (f.type === 'risks') return firstOf(riskIssues(p.RR || []));
+  if (f.type === 'envs') return firstOf(envIssues(p.ER || []));
+  if (f.id === 'I01exp' && v && parseDMY(v) && parseDMY(p.D04) && !(p.OFF || []).includes('app:iso') && !(p.OFF || []).includes('app') && ymd(parseDMY(v)!) < ymd(parseDMY(p.D04)!))
+    return `The certificate expired on ${parseDMY(v)}, before the plan date ${parseDMY(p.D04)}. Add the renewed certificate and its details.`;
   if (f.type === 'text' || f.type === 'longtext') {
     const s = String(v ?? '');
     if (f.max && s.length > f.max) return `Maximum ${f.max} characters (now ${s.length}).`;

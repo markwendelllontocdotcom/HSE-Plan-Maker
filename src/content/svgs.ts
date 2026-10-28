@@ -34,19 +34,20 @@ export function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-/** Header banner like R1's: logo at left, red bar with the tagline running to the right edge. 1637 x 216 px. */
-export async function bannerSvg(logo: ImgAsset, tagline: string, color: string, plat: Platform): Promise<string> {
+/** Header banner like R1's: logo at left, red bar with the tagline running to the right edge. 1637 x 216 px
+ *  (wider for landscape pages: the bar runs on to the right edge). */
+export async function bannerSvg(logo: ImgAsset, tagline: string, color: string, plat: Platform, width = 1637): Promise<string> {
   const fontCss = await plat.fontCss();
   const boxW = 655, boxH = 185;
   const k = Math.min(boxW / logo.w, boxH / logo.h);
   const lw = Math.round(logo.w * k), lh = Math.round(logo.h * k);
   const t = tagline.trim().toUpperCase();
   const fs = Math.max(16, Math.min(34, Math.floor(790 / Math.max(1, t.length * 0.56))));
-  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1637" height="216" viewBox="0 0 1637 216">
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="216" viewBox="0 0 ${width} 216">
 <style>${fontCss}</style>
-<rect width="1637" height="216" fill="#ffffff"/>
+<rect width="${width}" height="216" fill="#ffffff"/>
 <image x="${50}" y="${11 + Math.round((boxH - lh) / 2)}" width="${lw}" height="${lh}" xlink:href="${assetDataUrl(logo)}" href="${assetDataUrl(logo)}"/>
-${t ? `<rect x="807" y="90" width="830" height="49" fill="${esc(color)}"/>
+${t ? `<rect x="807" y="90" width="${width - 807}" height="49" fill="${esc(color)}"/>
 <text x="823" y="${114 + Math.round(fs * 0.36)}" font-family="Carlito" font-weight="700" font-size="${fs}" fill="#ffffff" letter-spacing="0.5">${esc(t)}</text>` : ''}
 </svg>`;
 }
@@ -63,4 +64,14 @@ export function fadeSvg(src: ImgAsset, opacity: number): { svg: string; w: numbe
 <image x="0" y="0" width="${w}" height="${h}" opacity="${opacity}" xlink:href="${assetDataUrl(src)}" href="${assetDataUrl(src)}"/>
 </svg>`,
   };
+}
+
+/** The default banner image widened for landscape pages: the red bar continues to the right edge. */
+export function bannerLandSvg(banner: ImgAsset, width: number, bar: string): string {
+  const url = assetDataUrl(banner);
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="216" viewBox="0 0 ${width} 216">
+<rect width="${width}" height="216" fill="#ffffff"/>
+<image x="0" y="0" width="1637" height="216" xlink:href="${url}" href="${url}"/>
+<rect x="1636" y="90" width="${width - 1636}" height="50" fill="${esc(bar)}"/>
+</svg>`;
 }

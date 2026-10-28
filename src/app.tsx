@@ -15,6 +15,7 @@ import { canPickFolder, loadExportDir, chooseExportDir, forgetExportDir, ensureW
 import { ASSET_URLS } from './platform-browser';
 import { Row, TextInput, TextArea, Select, Multi, Toggle, ImagePick, Images, PersonInput, People, Persons, Revisions, DmyInput, DocBox, Lines, Permits, Contacts, Policies, CodeEditor } from './ui/controls';
 import { OrgPreview } from './ui/orgpreview';
+import { RegModePick, RiskRows, EnvRows } from './ui/registers';
 import { AboutPanel } from './ui/about';
 import { Review } from './ui/review';
 import { Plans, PreviewModal } from './ui/plans';
@@ -423,8 +424,8 @@ export function App() {
       case 'multi': ctl = <Multi id={id} value={v || []} options={f.options!} onChange={(x) => set(f.id, x)} />; wide = true; break;
       case 'toggle': ctl = <Toggle id={id} value={!!v} onChange={(x) => set(f.id, x)} label={v ? 'Shown on every page' : 'Hidden'} />; break;
       case 'image': ctl = <ImagePick id={id} value={v} maxMB={f.maxMB || 2} onChange={(x) => set(f.id, x)} onError={showError}
-        fallback={f.id === 'R09' ? ASSET_URLS.logo : f.id === 'R12' ? ASSET_URLS.watermark : undefined}
-        fallbackLabel={f.id === 'R09' ? 'Default: Oxypro logo' : f.id === 'R12' ? 'Default: faint Oxypro mark' : undefined} />; wide = true; break;
+        fallback={f.id === 'R09' ? ASSET_URLS.logo : f.id === 'R12' ? ASSET_URLS.watermark : f.id === 'I01' ? ASSET_URLS.iso45001 : undefined}
+        fallbackLabel={f.id === 'R09' ? 'Default: Oxypro logo' : f.id === 'R12' ? 'Default: faint Oxypro mark' : f.id === 'I01' ? 'Built-in: ISO 45001:2018, TUV Apex, CN031157 (26.02.2026)' : undefined} />; wide = true; break;
       case 'images': ctl = <Images id={id} value={v || []} maxMB={f.maxMB || 5} onChange={(x) => set(f.id, x)} onError={showError} />; wide = true; break;
       case 'person': ctl = <PersonInput id={id} value={v} onChange={(x) => set(f.id, x)} />; wide = true; break;
       case 'persons': ctl = <Persons id={id} value={v || []} min={0} max={f.personMax || 10} addLabel="Add person" onChange={(x) => set(f.id, x)} />; wide = true; break;
@@ -435,12 +436,15 @@ export function App() {
       case 'contacts': ctl = <Contacts id={id} value={v || []} onChange={(x) => set(f.id, x)} />; wide = true; break;
       case 'policies': ctl = <Policies id={id} value={v || []} onChange={(x) => set(f.id, x)} onError={showError} />; wide = true; break;
       case 'code': ctl = <CodeEditor code={p.C01} name={p.C01name} chap={p.CHAP} onChange={(c, n, ch) => setP((o) => (o ? { ...o, C01: c, C01name: n, CHAP: ch, modified: new Date().toISOString() } : o))} />; wide = true; break;
+      case 'regmode': ctl = <RegModePick id={id} value={v} name={f.id === 'A02mode' ? 'Project Risk Register' : 'Environmental Impact Register'} scans={(f.id === 'A02mode' ? p.A02 : p.A03).length} onChange={(x) => set(f.id, x)} />; wide = true; break;
+      case 'risks': ctl = <RiskRows id={id} value={v || []} onChange={(x) => set(f.id, x)} />; wide = true; break;
+      case 'envs': ctl = <EnvRows id={id} value={v || []} onChange={(x) => set(f.id, x)} />; wide = true; break;
       case 'sections': return <SectionsPanel p={p} onChange={(x) => set('OFF', x)} />;
     }
     return <Row f={f} error={err} wide={wide}>{ctl}</Row>;
   };
 
-  const groupFields = FIELDS.filter((f) => f.group === group);
+  const groupFields = FIELDS.filter((f) => f.group === group && (!f.showIf || f.showIf(p)));
   const groupIssues = (g: string) => FIELDS.filter((f) => f.group === g && (fieldError(f, p) || (f.mandatory && missing.includes(f)))).length;
   const isReview = group === 'review', isPlans = group === 'plans';
   const title = isReview ? 'Review' : isPlans ? 'My HSE Plans' : GROUPS.find((g) => g.id === group)!.title;
@@ -514,7 +518,7 @@ export function App() {
           ) : <>
             {group === 'doc' && <p class="lead">Type the Document No., Revision and Date to finalise the cover. Each plan is a revision of the company sample HSE Plan (Rev 00, 26.06.2024), so it starts as Rev 01; the amendment record's last row follows the Revision and Date.</p>}
             {group === 'branding' && <p class="lead">The Oxypro header and watermark, as on the PQP. Change them here for this plan only.</p>}
-            {group === 'appendix' && <p class="lead">Appendix 1 (HSE organization chart) is drawn from 4. HSE Organization. For the registers, add page scans or screenshots, or leave them empty to say they are attached separately.</p>}
+            {group === 'appendix' && <p class="lead">Appendix 1 (HSE organization chart) is drawn from 4. HSE Organization. Appendix 2 is the ISO 45001:2018 certificate. Appendices 3 and 4, the Project Risk Register and the Environmental Impact Register, start with the two standard sentences and then print the register, scans of it, or nothing more.</p>}
             {group === 'reqs' && <p class="lead">The standard lists of the Oxypro HSE Plan. Change them for this project; Reset brings back the standard list.</p>}
             {group === 'people' && <OrgPreview p={p} />}
             <div class="fields">{groupFields.map((f) => <>{f.section && <h2 class="subhead">{f.section}</h2>}{render(f)}</>)}</div>

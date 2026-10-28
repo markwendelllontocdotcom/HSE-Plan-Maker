@@ -45,7 +45,7 @@ export function About(props: { exportFolder: string | null; canPickFolder: boole
 
       <section>
         <h2>What it does</h2>
-        <p>You enter the project details once, or bring them in from the Oxypro Project Library, a PQP Maker project or the Projects Master List. {APP_NAME} writes the full Project HSE Plan from the company standard: cover with the Document No., Revision and Date boxes and the signature block, Document Control page and Amendment Record, table of contents with the code of practice chapters, Sections 1 to 9 with their numbering and wording, the four signed HSE policy statements, the incident investigation flowchart and the appendices (HSE organization chart, risk register, environmental impact register). You get an editable Word file and a PDF, both A4 with the Oxypro header and "Page X of Y" in the footer, the same format as the PQP.</p>
+        <p>You enter the project details once, or bring them in from the Oxypro Project Library, a PQP Maker project or the Projects Master List. {APP_NAME} writes the full Project HSE Plan from the company standard: cover with the Document No., Revision and Date boxes and the signature block, Document Control page and Amendment Record, table of contents with the code of practice chapters, Sections 1 to 9 with their numbering and wording, the four signed HSE policy statements, the incident investigation flowchart and the appendices: HSE organization chart, ISO 45001:2018 certificate, Project Risk Register and Environmental Impact Register (on landscape pages). You get an editable Word file and a PDF, both A4 with the Oxypro header and "Page X of Y" in the footer, the same format as the PQP.</p>
       </section>
 
       <section>
@@ -92,8 +92,9 @@ export function About(props: { exportFolder: string | null; canPickFolder: boole
 
       <section>
         <h2>The standard text</h2>
-        <p>The plan follows the company sample "Project HSE Plan" (Rev 00, 26.06.2024) and is issued as its revision: a new plan starts as <b>Rev 01</b>, dated the day it is made, and the Amendment Record lists Rev 00 (26.06.2024, initial issue) and Rev 01. These corrections were made in the revision:</p>
+        <p>The plan follows the company sample "Project HSE Plan" (Rev 00, 26.06.2024) and is issued as its revision: a new plan starts as <b>Rev 01</b>, dated the day it is made, and the Amendment Record lists Rev 00 (26.06.2024, initial issue) and Rev 01. These changes were made in the revision:</p>
         <ul>{CORRECTIONS.map((c) => <li>{c}</li>)}</ul>
+        <p>The registers use the risk criteria of the Oxypro Risk Assessment form OXY-QHSE-F-RA-01: Score = Likelihood × Severity; 1–4 LOW, 5–12 MEDIUM, 15–25 HIGH, with the residual risk brought to LOW or MEDIUM before work starts. In the Environmental Impact Register a score of 8 or more is a significant aspect.</p>
       </section>
 
       <section>

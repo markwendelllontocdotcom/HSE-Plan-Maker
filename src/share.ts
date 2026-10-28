@@ -1,3 +1,4 @@
+import { riskRows, envRows } from './content/registers';
 import type { Project } from './model/types';
 import { deflate, toBase64Url, hasShareHash } from './importers';
 import { WEB_URL, APP_NAME, APP_VERSION } from './version';
@@ -79,7 +80,11 @@ export function emlDraft(bytes: Uint8Array, name: string, p: Project): string {
 
 /** The plan without photos, logos and scans (for links). */
 export function textOnly(p: Project): Project {
-  return { ...p, R07: null, R08: null, R09: null, R10: null, R12: null, A02: [], A03: [], POL: p.POL.map((x) => ({ ...x, image: null })) };
+  const out: any = { ...p, R07: null, R08: null, R09: null, R10: null, R12: null, I01: null, A02: [], A03: [], POL: p.POL.map((x) => ({ ...x, image: null })) };
+  // registers left as the standard ones stay out of the link (the app fills them in again): a shorter link
+  if (JSON.stringify(p.RR) === JSON.stringify(riskRows())) delete out.RR;
+  if (JSON.stringify(p.ER) === JSON.stringify(envRows())) delete out.ER;
+  return out as Project;
 }
 
 /** Link to the web version that opens this plan (text only). */

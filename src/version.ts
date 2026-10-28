@@ -1,5 +1,5 @@
 export const APP_NAME = 'HSE Plan Maker';
-export const APP_VERSION = '1.0.2';
+export const APP_VERSION = '1.0.3';
 export const APP_DATE = '28 Oct 2026';
 /** Web address of the installable version (GitHub Pages). WEB_LIVE turns on share links once it is published. */
 export const WEB_URL = 'https://markwendelllontocdotcom.github.io/MEP-HSE-Plan-Maker/';
@@ -10,6 +10,18 @@ export const VERSION_LINE = `Version ${APP_VERSION} (${APP_DATE})`;
 
 /** Version history shown in the About panel (newest first). Keep README.txt in step. */
 export const CHANGES: { v: string; date: string; items: string[] }[] = [
+  {
+    v: '1.0.3',
+    date: '28 Oct 2026',
+    items: [
+      'Appendix 2 is the Oxypro ISO 45001:2018 certificate (TUV Apex, Certificate No. CN031157), built in. Section 5 refers to it. Add the new scan under 7. Appendices when the certificate is renewed; a plan dated after the expiry is flagged.',
+      'Appendix 3 Project Risk Register: the two standard sentences, then the register on landscape pages, in the layout of the Oxypro Risk Assessment form: 5 x 5 risk criteria, initial and residual risk with LOW / MEDIUM / HIGH colours, control measures and the person responsible. It starts with the 32 steps of the Oxypro MEP Risk Assessment Master Reference and heat stress.',
+      'Appendix 4 Environmental Impact Register: 17 environmental aspects of MEP works (waste, hazardous waste, spills, flushing water, refrigerants, dust, noise and more) with condition, significance, control measures, legal requirements and the person responsible.',
+      'Both registers are edited per plan under 7. Appendices (add, move, remove, reset to the standard register). A row whose residual risk is still HIGH is flagged. Scanned pages, or the two sentences only, can be chosen instead.',
+      'The incident investigation flowchart in 8.22 is the updated Oxypro flowchart.',
+      'Emergency Contact Numbers, when switched on, are now Appendix 5. The Rev 01 amendment line names the certificate and the registers.',
+    ],
+  },
   {
     v: '1.0.2',
     date: '28 Oct 2026',

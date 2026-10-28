@@ -1,11 +1,12 @@
-import type { Project, Settings, ExtraPerson } from '../model/types';
+import type { Project, Settings, ExtraPerson, RiskRow, EnvRow } from '../model/types';
 import { codeHeading, codeLine, BUILTIN_POLICIES } from '../model/defaults';
 import { revLabel, projectCode, yearOf } from '../model/format';
 import type { Block, DocModel, Run, Platform, Row, Cell, CellPara, ImgAsset, TocRow } from '../gen/model';
-import { CONTENT_W, NAVY } from '../gen/model';
+import { CONTENT_W, CONTENT_WL, NAVY, BANNER, BANNER_LAND_PX } from '../gen/model';
 import { SECTIONS, APPENDICES, TERMS, WARNINGS, type Sec, type Body, type Item } from './hse';
 import { orgChartSvg } from './orgchart';
-import { bannerSvg, fadeSvg } from './svgs';
+import { bannerSvg, bannerLandSvg, fadeSvg } from './svgs';
+import { LIKELIHOOD, SEVERITY, ENV_SEVERITY, BANDS, SIG_BANDS, RISK_NOTES, ENV_NOTES, score, band, significant } from './registers';
 
 export const TITLE = 'Project Health, Safety & Environment Plan';
 
@@ -72,6 +73,7 @@ export async function buildDoc(p: Project, s: Settings, plat: Platform): Promise
   const co = (s.companyShort || 'Oxypro').trim();
   const company = titleCaseCompany(stripMs(p.R04 || s.companyName));
   const project = p.P01.trim() || '[Project Name]';
+  const docNo = p.D01.trim(), rev = p.D03.trim(), date = p.D04.trim();
   const appNo = (key: string) => nums['app:' + key];
   const tokens: Record<string, string> = {
     CO: co,
@@ -82,6 +84,10 @@ export async function buildDoc(p: Project, s: Settings, plat: Platform): Promise
     LIFTAUTH: LIFT_AUTH[p.P04] || 'the relevant local authority',
     CIVILDEF: CIVIL_DEF[p.P04] || 'Civil Defence',
     ORGREF: appNo('org') ? `is attached in ${appNo('org')} of this project HSE plan` : 'is maintained by the Project HSE Department',
+    // Section 5: the ISO 45001:2018 certificate (Appendix 2, user request 28 Oct 2026)
+    ISOCERT: `The ${co} Occupational Health & Safety Management System is certified to ISO\u00A045001:2018${p.I01by.trim() ? ` by ${p.I01by.trim()}` : ''}${p.I01no.trim() ? ` (Certificate No. ${p.I01no.trim()})` : ''}. `
+      + (appNo('iso') ? `A copy of the certificate is attached in ${appNo('iso')} of this project HSE plan.` : 'A copy of the certificate is held by the Corporate HSE Department.')
+      + ` This Project HSE Plan applies the certified system to the ${project} project.`,
   };
   const tok = (x: string) => x
     .replace(/\{\{SECREF:([\w.]+)\}\}/g, (_, id) => (nums[id] ? `section ${nums[id]} of this plan` : 'the project HSE organization'))
@@ -99,11 +105,13 @@ export async function buildDoc(p: Project, s: Settings, plat: Platform): Promise
     while (open.length && open[open.length - 1].lvl >= lvl) {
       const u = open.pop()!;
       const last = out[out.length - 1] as any;
-      if (last && last.t !== 'pb') (last.mark = last.mark || []).push('end:' + u.id);
+      if (last && last.t !== 'pb' && last.t !== 'sect') (last.mark = last.mark || []).push('end:' + u.id);
     }
   };
-  const H = (lvl: 1 | 2, num: string, x: string, id: string, pbBefore = false) => {
+  let land = false; // landscape pages (the registers)
+  const H = (lvl: 1 | 2, num: string, x: string, id: string, pbBefore = false, landscape = land) => {
     closeTo(lvl);
+    if (landscape !== land) { out.push({ t: 'sect', land: landscape }); land = landscape; pbBefore = false; }
     out.push({ t: 'h', lvl, num, x, id, pbBefore });
     open.push({ id, lvl });
   };
@@ -252,6 +260,109 @@ export async function buildDoc(p: Project, s: Settings, plat: Platform): Promise
     out.push({ t: 'img', key: addImg(a), w, h, jc: ind ? 'left' : 'center' });
   }
 
+  // ---------------- registers (Appendix 3 and 4): landscape tables in the Oxypro RA form layout
+  const RS = 16; // 8 pt
+  const sm = (x: string, extra: Partial<Run> = {}): Run => txt(x, { sz: RS, ...extra });
+  const c8 = (x: string, extra: Partial<Cell> = {}, jc?: string): Cell => ({ p: x.split('\n').map((line) => ({ r: [sm(line)], jc })), va: 'top', ...extra });
+  const h8 = (x: string, extra: Partial<Cell> = {}): Cell => ({ p: x.split('\n').map((line) => ({ r: [sm(line, { b: 1 })], jc: 'center' })), fill: NAVY, color: 'FFFFFF', bold: true, va: 'center', ...extra });
+  const bullets = (x: string): Cell => {
+    const lines = x.split('\n').map((l) => l.replace(/^\s*[•\-*]\s*/, '').trim()).filter(Boolean);
+    return { p: lines.length ? lines.map((l) => ({ r: [sm(l)], li: lines.length > 1 ? '1' : undefined })) : [{ r: [] }], va: 'top' };
+  };
+  const num = (n: number) => c8(n ? String(n) : '–', {}, 'center');
+  const rating = (sc: number): Cell => {
+    const b = band(sc);
+    return b ? { p: [{ r: [sm(b.key, { b: 1 })], jc: 'center' }], fill: b.fill, color: b.color, bold: true } : c8('–', {}, 'center');
+  };
+  const sigCell = (sc: number): Cell => {
+    if (!sc) return c8('–', {}, 'center');
+    const b = SIG_BANDS[significant(sc) ? 1 : 0];
+    return { p: [{ r: [sm(b.key, { b: 1 })], jc: 'center' }], fill: b.fill, color: b.color, bold: true };
+  };
+  const sub = (x: string) => P([txt(x, { b: 1, sz: 20 })], 0, { keep: true, jc: 'left', before: 120, after: 60, sz: 20 });
+  const note = (x: string) => P([sm(x)], 0, { jc: 'left', after: 40, sz: RS });
+
+  /** project, reference, revision and date, and the people who prepare, review and approve the register */
+  function registerHead(title: string, ref: string) {
+    const lab = (x: string): Cell => ({ p: [{ r: [sm(x, { b: 1 })] }], fill: 'F2F2F2', bold: true, va: 'center' });
+    const val = (x: string, span?: number): Cell => ({ p: [{ r: [sm(x)] }], va: 'center', span });
+    const who = (n: string, d: string) => [n.trim(), d.trim()].filter(Boolean).join(', ');
+    sub(title.toUpperCase());
+    out.push({ t: 'tbl', grid: [1300, 4500, 1300, 3204, 1100, 800, 900, 1300], sz: RS, rows: [
+      { c: [lab('Project'), val(project), lab('Reference'), val(ref), lab('Revision'), val(rev), lab('Date'), val(date)], minH: 340 },
+      { c: [lab('Prepared by'), val(who(p.D06, p.D07)), lab('Reviewed by'), val(who(p.D08, p.D09)), lab('Approved by'), val(who(p.D10, p.D11), 3)], minH: 340 },
+    ] });
+  }
+
+  /** 5 x 5 matrix: likelihood rows (5 to 1) against severity columns (1 to 5), coloured by rating or significance */
+  function matrix(sev: [number, string, string][], colour: (sc: number) => { fill: string; color: string }) {
+    const desc = (n: string, d: string, c = '000000'): CellPara[] => [{ r: [sm(n, { b: 1, c })], jc: 'center' }, { r: [txt(d, { sz: 14, c })], jc: 'center' }];
+    const first = 3404, w = (CONTENT_WL - first) / 5;
+    out.push({ t: 'tbl', grid: [first, w, w, w, w, w], sz: RS, rows: [
+      { header: true, c: [h8('Likelihood (L)  /  Severity (S)'), ...sev.map(([n, name, d]): Cell => ({ p: desc(`${n}  ${name}`, d, 'FFFFFF'), fill: NAVY, va: 'center' }))] },
+      ...LIKELIHOOD.map(([l, name, d]) => ({ c: [
+        { p: [{ r: [sm(`${l}  ${name}`, { b: 1 })] }, { r: [txt(d, { sz: 14 })] }], fill: 'F2F2F2', va: 'center' } as Cell,
+        ...sev.map(([sv]): Cell => { const sc = l * sv; const k = colour(sc); return { p: [{ r: [sm(String(sc), { b: 1 })], jc: 'center' }], fill: k.fill, color: k.color, bold: true, va: 'center' }; }),
+      ] })),
+    ] });
+  }
+
+  function riskRegister(rows: RiskRow[]) {
+    sub('Risk assessment criteria (Oxypro Risk Assessment form OXY-QHSE-F-RA-01): Risk Score = Likelihood (L) × Severity (S)');
+    matrix(SEVERITY, (sc) => band(sc)!);
+    out.push({ t: 'tbl', grid: [1700, 2200, CONTENT_WL - 3900], sz: RS, rows: [
+      { header: true, c: [h8('Risk Score (L × S)'), h8('Risk Rating'), h8('Action Required')] },
+      ...BANDS.map((b) => ({ c: [c8(`${b.from} – ${b.to}`, { va: 'center' }, 'center'), { p: [{ r: [sm(`${b.key} – ${b.label}`, { b: 1 })], jc: 'center' }], fill: b.fill, color: b.color, bold: true, va: 'center' } as Cell, c8(b.action, { va: 'center' })] })),
+    ] });
+    RISK_NOTES.forEach((n, i) => note(`(${i + 1}) ${n}`));
+    sub('Project Risk Register');
+    const g = [450, 1650, 1750, 1150, 320, 320, 560, 820, 3900, 320, 320, 560, 820];
+    g.push(CONTENT_WL - g.reduce((x, y) => x + y, 0));
+    const vr = (x: string): Cell => h8(x, { vm: 'restart' });
+    const vc: Cell = { p: [], vm: 'cont', fill: NAVY };
+    out.push({ t: 'tbl', grid: g, sz: RS, rows: [
+      { header: true, c: [vr('No.'), vr('Activity / Task Step'), vr('Hazards / Risks'), vr('Persons at Risk'), h8('Initial Risk', { span: 4 }), vr('Control Measures'), h8('Residual Risk', { span: 4 }), vr('Person Responsible')] },
+      { header: true, c: [vc, vc, vc, vc, h8('L'), h8('S'), h8('Score'), h8('Rating'), vc, h8('L'), h8('S'), h8('Score'), h8('Rating'), vc] },
+      ...rows.map((r, i) => {
+        const s1 = score(r.L, r.S), s2 = score(r.L2, r.S2);
+        return { c: [
+          c8(String(i + 1).padStart(2, '0'), {}, 'center'), c8(r.activity, { bold: true }), c8(r.hazards), c8(r.persons),
+          num(r.L), num(r.S), num(s1), rating(s1),
+          bullets(r.controls),
+          num(r.L2), num(r.S2), num(s2), rating(s2),
+          c8(r.resp),
+        ] };
+      }),
+    ] });
+  }
+
+  function envRegister(rows: EnvRow[]) {
+    sub('Significance criteria: Score = Likelihood (L) × Severity (S) of the environmental impact');
+    matrix(ENV_SEVERITY, (sc) => SIG_BANDS[significant(sc) ? 1 : 0]);
+    out.push({ t: 'tbl', grid: [1700, 2200, CONTENT_WL - 3900], sz: RS, rows: [
+      { header: true, c: [h8('Score (L × S)'), h8('Significance'), h8('Control')] },
+      ...SIG_BANDS.map((b) => ({ c: [c8(`${b.from} – ${b.to}`, { va: 'center' }, 'center'), { p: [{ r: [sm(`${b.key} – ${b.label}`, { b: 1 })], jc: 'center' }], fill: b.fill, color: b.color, bold: true, va: 'center' } as Cell, c8(b.action, { va: 'center' })] })),
+    ] });
+    ENV_NOTES.forEach((n, i) => note(`(${i + 1}) ${n}`));
+    sub('Environmental Impact Register');
+    const g = [450, 1600, 1700, 1600, 600, 320, 320, 560, 900, 3300, 1600];
+    g.push(CONTENT_WL - g.reduce((x, y) => x + y, 0));
+    const vr = (x: string): Cell => h8(x, { vm: 'restart' });
+    const vc: Cell = { p: [], vm: 'cont', fill: NAVY };
+    out.push({ t: 'tbl', grid: g, sz: RS, rows: [
+      { header: true, c: [vr('No.'), vr('Activity / Area'), vr('Environmental Aspect'), vr('Environmental Impact'), vr('Cond.'), h8('Significance', { span: 4 }), vr('Control Measures'), vr('Legal & Other Requirements'), vr('Responsible')] },
+      { header: true, c: [vc, vc, vc, vc, vc, h8('L'), h8('S'), h8('Score'), h8('Significant'), vc, vc, vc] },
+      ...rows.map((r, i) => {
+        const sc = score(r.L, r.S);
+        return { c: [
+          c8(String(i + 1).padStart(2, '0'), {}, 'center'), c8(r.activity, { bold: true }), c8(r.aspect), c8(r.impact), c8(r.cond || '–', {}, 'center'),
+          num(r.L), num(r.S), num(sc), sigCell(sc),
+          bullets(r.controls), c8(r.legal), c8(r.resp),
+        ] };
+      }),
+    ] });
+  }
+
   // ---------------- appendices
   if (on('app')) {
     const list = APPENDICES.filter((a) => on(a.id));
@@ -259,7 +370,9 @@ export async function buildDoc(p: Project, s: Settings, plat: Platform): Promise
     if (list.length) {
       H(1, '', 'Appendices', 'app', true);
       for (const [i, a] of list.entries()) {
-        H(2, '', `${nums[a.id]}: ${a.title}`, a.id, i > 0);
+        const mode = a.key === 'risk' ? p.A02mode : a.key === 'env' ? p.A03mode : null;
+        const landscape = mode === 'register'; // the registers are printed on landscape pages, like the Oxypro RA form
+        H(2, '', `${nums[a.id]}: ${a.title}`, a.id, i > 0, landscape);
         if (a.key === 'org') {
           const svg = await orgChartSvg(p, plat);
           const png = await plat.svgToPng(svg.svg, svg.w * 2, svg.h * 2);
@@ -273,17 +386,25 @@ export async function buildDoc(p: Project, s: Settings, plat: Platform): Promise
             ...ppl.map((x) => ({ c: (withContacts ? [x.role, x.name, x.email, x.phone] : [x.role, x.name]).map((v) => cell(v)) })),
           ] });
         }
+        if (a.key === 'iso') {
+          const cert = p.I01 ? await plat.dataUrlToAsset(p.I01.dataUrl) : await plat.asset('iso45001');
+          fitImage(cert, CONTENT_W - 200, 12800);
+        }
         if (a.key === 'risk' || a.key === 'env') {
           const imgs = a.key === 'risk' ? p.A02 : p.A03;
           const ref = (a.key === 'risk' ? p.A02ref : p.A03ref).trim();
-          if (imgs.length) {
+          // the two sentences of the user's brief (28 Oct 2026), then the register itself, the scans, or nothing more
+          P([txt(`The ${a.title}${ref ? ` (Ref. ${ref})` : ''} is attached separately to this Project HSE Plan.`)], 567);
+          P([txt(`The Project HSE Manager keeps the ${a.title} up to date as the project develops (refer Section ${nums['s5.2'] || '5'}).`)], 567);
+          if (mode === 'scans' && imgs.length) {
             for (const [j, im] of imgs.entries()) {
               if (j > 0) out.push({ t: 'pb' });
               fitImage(await plat.dataUrlToAsset(im.dataUrl), CONTENT_W, 12600);
             }
-          } else {
-            P([txt(`The ${a.title}${ref ? ` (Ref. ${ref})` : ''} is attached separately to this Project HSE Plan.`)], 567);
-            P([txt(`The Project HSE Manager keeps the ${a.title} up to date as the project develops (refer Section ${nums['s5.2'] || '5'}).`)], 567);
+          } else if (mode === 'register') {
+            registerHead(a.title, ref || `${docNo || 'Project HSE Plan'}, ${nums[a.id]}`);
+            if (a.key === 'risk') riskRegister(p.RR);
+            else envRegister(p.ER);
           }
         }
         if (a.key === 'contacts') {
@@ -318,7 +439,6 @@ export async function buildDoc(p: Project, s: Settings, plat: Platform): Promise
   const front: Block[] = [];
   const fP = (r: Run[], extra: Partial<Extract<Block, { t: 'p' }>> = {}) => front.push({ t: 'p', r, l: 0, sz: SZ, jc: 'left', ...extra });
   fP([txt('Document Control', { b: 1, sz: 24 })], { jc: 'center', pbBefore: true, after: 160 });
-  const docNo = p.D01.trim(), rev = p.D03.trim(), date = p.D04.trim();
   const ctl: [string, string][] = [
     ['Document Title', TITLE],
     ['Project', project],
@@ -357,6 +477,11 @@ export async function buildDoc(p: Project, s: Settings, plat: Platform): Promise
     banner = await plat.svgToPng(svg, 1637, 216);
   }
   addImg(banner, 'banner');
+  // the banner widened for the landscape register pages
+  const bannerLand = defaultBrand
+    ? await plat.svgToPng(bannerLandSvg(banner, BANNER_LAND_PX, BANNER.bar), BANNER_LAND_PX, BANNER.pxH)
+    : await plat.svgToPng(await bannerSvg(p.R09 ? await plat.dataUrlToAsset(p.R09.dataUrl) : await plat.asset('logo'), p.R11 || '', s.brandColor || '#D72025', plat, BANNER_LAND_PX), BANNER_LAND_PX, BANNER.pxH);
+  addImg(bannerLand, 'bannerLand');
   let watermark: string | null = null;
   if (p.R12on) {
     if (p.R12) {
@@ -397,7 +522,7 @@ export async function buildDoc(p: Project, s: Settings, plat: Platform): Promise
   return {
     docNo, rev, footerLeft, title: TITLE,
     cover, front, toc: { code: p.C01 === 'none' ? null : (p.C01name || codeHeading(p.C01)).trim() || 'Code of Practice', rows: toc },
-    banner: 'banner', watermark, blocks: out, images,
+    banner: 'banner', bannerLand: 'bannerLand', watermark, blocks: out, images,
     meta: { project: p.P01, company, created: new Date().toISOString() },
   };
 }

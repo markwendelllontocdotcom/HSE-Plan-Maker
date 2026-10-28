@@ -1,5 +1,5 @@
 HSE PLAN MAKER - User guide
-Version 1.0.2 (28 Oct 2026)
+Version 1.0.3 (28 Oct 2026)
 
 Developed by Mark Lontoc | Dubai, United Arab Emirates | (c) 2026 MLWorks. All rights reserved.
 
@@ -44,9 +44,18 @@ MAKING AN HSE PLAN
      the standard list.
   5. 6. HSE Policy Statements: the four signed Oxypro policies are built in. Add a newer scan to replace
      one, or untick it.
-  6. Plan Sections: untick any section you do not need; the sections after it are renumbered.
-  7. Review shows what still needs fixing and a preview of every page.
-  8. Word, PDF, Print or Share (toolbar, summary panel, Review, or My HSE Plans).
+  6. 7. Appendices:
+       - Appendix 1, the HSE organization chart, is drawn from 4. HSE Organization.
+       - Appendix 2 is the Oxypro ISO 45001:2018 certificate (TUV Apex, CN031157), built in. When it is
+         renewed, add the new scan and update the certificate number and expiry. Section 5 refers to it.
+       - Appendix 3 Project Risk Register and Appendix 4 Environmental Impact Register start with the
+         two standard sentences, then print the register on landscape pages (Oxypro RA form criteria:
+         Score = L x S; 1-4 LOW, 5-12 MEDIUM, 15-25 HIGH; 8 or more = significant environmental aspect).
+         Edit the rows for the project: add, move, remove, or reset to the standard register. Or choose
+         scanned pages, or the two sentences only when the register goes as a separate document.
+  7. Plan Sections: untick any section you do not need; the sections after it are renumbered.
+  8. Review shows what still needs fixing and a preview of every page.
+  9. Word, PDF, Print or Share (toolbar, summary panel, Review, or My HSE Plans).
 
   Exports are named <Document No.> Rev NN - HSE Plan - <Project>.docx / .pdf, for example
   OPEM-DXB-101-HS-PLN-001 Rev 01 - HSE Plan - Sample Residential Tower (G+20).pdf
@@ -74,6 +83,9 @@ YOUR DATA
 
 
 VERSION HISTORY
+  1.0.3 (28 Oct 2026) Appendix 2 ISO 45001:2018 certificate; Appendix 3 Project Risk Register and
+                      Appendix 4 Environmental Impact Register printed in full on landscape pages and
+                      editable per plan; updated incident investigation flowchart.
   1.0.2 (28 Oct 2026) Each plan is Rev 01 of the company sample HSE Plan (Rev 00, 26.06.2024):
                       the Amendment Record lists both, dates follow the revision date.
   1.0.1 (28 Oct 2026) No "M/s." in the plan: party names print as typed.

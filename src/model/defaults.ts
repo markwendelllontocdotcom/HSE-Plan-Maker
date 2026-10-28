@@ -1,7 +1,8 @@
-import type { Project, Settings, Person, PolicyRow, PermitRow, ContactRow, CodeKey } from './types';
+import type { Project, Settings, Person, PolicyRow, PermitRow, ContactRow, CodeKey, RegMode, RiskRow, EnvRow } from './types';
 import { APP_VERSION } from '../version';
 import { todayDMY } from './format';
 import { SECTIONS } from '../content/hse';
+import { riskRows, envRows } from '../content/registers';
 
 export const EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah', 'Umm Al Quwain'];
 export const DISCIPLINES = ['HVAC', 'Plumbing & Drainage', 'Electrical', 'Fire Fighting', 'Fire Alarm', 'ELV', 'LPG', 'Civil', 'Structural', 'Fit-out'];
@@ -101,7 +102,7 @@ export function defaultPolicies(): PolicyRow[] {
   ];
 }
 
-/** Appendix 4 (added): UAE emergency numbers plus the project's own. */
+/** Appendix 5 (added): UAE emergency numbers plus the project's own. */
 export function defaultContacts(): ContactRow[] {
   return [
     { service: 'Police', number: '999' },
@@ -116,7 +117,12 @@ export function defaultContacts(): ContactRow[] {
 
 /** Every plan is a revision of the company sample HSE Plan (Rev 00, 26.06.2024): user request 28 Oct 2026. */
 export const SAMPLE_REV = { rev: '00', date: '26.06.2024', desc: 'Initial issue (Oxypro Project HSE Plan)' };
-export const REVISION_DESC = 'Revised to the Oxypro standard format (same layout as the PQP); numbering and text corrected; project details added';
+export const REVISION_DESC = 'Revised to the Oxypro standard format (same layout as the PQP); numbering and text corrected; project details, ISO 45001:2018 certificate, Project Risk Register and Environmental Impact Register added';
+/** The Rev 01 description of versions 1.0.2 and earlier (updated in plans that still have it). */
+const REVISION_DESC_102 = 'Revised to the Oxypro standard format (same layout as the PQP); numbering and text corrected; project details added';
+
+/** The Oxypro ISO 45001:2018 certificate built into the app (TUV Apex, current issue 26 Feb 2026). */
+export const ISO_CERT = { no: 'CN031157', by: 'TUV Apex Standardization Certifications', exp: '24.12.2026' };
 export function revisionHistory(date: string) {
   return [{ ...SAMPLE_REV }, { rev: '01', date, desc: REVISION_DESC }];
 }
@@ -162,7 +168,9 @@ export function newProject(s: Settings): Project {
     T01: defaultPermits(s.companyShort || 'Oxypro'), T02: '24',
     O01: [...OBJECTIVES], O02: [...TARGETS], O03: '500',
     POL: defaultPolicies(),
-    A02: [], A02ref: '', A03: [], A03ref: '',
+    I01: null, I01no: ISO_CERT.no, I01by: ISO_CERT.by, I01exp: ISO_CERT.exp,
+    A02mode: 'register', RR: riskRows(), A02: [], A02ref: '',
+    A03mode: 'register', ER: envRows(), A03: [], A03ref: '',
     E01: defaultContacts(),
     OFF: ['app:contacts'],
   };
@@ -203,7 +211,10 @@ export function migrate(p: any, s: Settings): Project {
   for (const k of ['K01', 'K02', 'K03', 'K04']) out[k] = pers(out[k]);
   for (const k of ['K05', 'K06']) out[k] = Array.isArray(out[k]) ? out[k].map(pers) : [pers(null)];
   for (const k of ['K07', 'K08', 'K09']) if (!Array.isArray(out[k])) out[k] = [];
-  for (const k of ['P08', 'L01', 'S01', 'S02', 'S03', 'O01', 'O02', 'A02', 'A03', 'OFF', 'H01', 'T01', 'E01', 'POL']) if (!Array.isArray(out[k])) out[k] = (base as any)[k];
+  for (const k of ['P08', 'L01', 'S01', 'S02', 'S03', 'O01', 'O02', 'A02', 'A03', 'OFF', 'H01', 'T01', 'E01', 'POL', 'RR', 'ER']) if (!Array.isArray(out[k])) out[k] = (base as any)[k];
+  out.RR = out.RR.map(riskRow);
+  out.ER = out.ER.map(envRow);
+  for (const k of ['A02mode', 'A03mode']) if (!REG_MODES.includes(out[k])) out[k] = 'register';
   out.CHAP = { ...chaptersFor(out.C01 || 'dubai'), ...(out.CHAP || {}) };
   const pol = defaultPolicies();
   out.POL = [...pol.map((d) => ({ ...d, ...(out.POL.find((x: PolicyRow) => x.key === d.key) || {}) })), ...out.POL.filter((x: PolicyRow) => !BUILTIN_POLICIES.includes(x.key))];
@@ -213,8 +224,24 @@ export function migrate(p: any, s: Settings): Project {
     out.D03 = '01';
     out.H01 = revisionHistory(date);
   }
+  // 1.0.3: the registers are printed in the plan (a plan with scans keeps them); the Rev 01 description names what was added
+  if (older(p?.appVersion, '1.0.3')) {
+    if (!p?.A02mode) out.A02mode = out.A02.length ? 'scans' : 'register';
+    if (!p?.A03mode) out.A03mode = out.A03.length ? 'scans' : 'register';
+    out.H01 = out.H01.map((h: any) => (h.desc === REVISION_DESC_102 ? { ...h, desc: REVISION_DESC } : h));
+  }
   out.appVersion = APP_VERSION;
   return out as Project;
+}
+
+export const REG_MODES: RegMode[] = ['register', 'scans', 'separate'];
+const rate = (v: any) => { const n = Math.round(Number(v)); return n >= 1 && n <= 5 ? n : 0; };
+const str = (v: any, max = 2000) => (typeof v === 'string' || typeof v === 'number' ? String(v).slice(0, max) : '');
+export function riskRow(r: any): RiskRow {
+  return { activity: str(r?.activity, 300), hazards: str(r?.hazards, 600), persons: str(r?.persons, 200), L: rate(r?.L), S: rate(r?.S), controls: str(r?.controls, 2000), L2: rate(r?.L2), S2: rate(r?.S2), resp: str(r?.resp, 200) };
+}
+export function envRow(r: any): EnvRow {
+  return { activity: str(r?.activity, 300), aspect: str(r?.aspect, 300), impact: str(r?.impact, 300), cond: ['N', 'A', 'E'].includes(r?.cond) ? r.cond : 'N', L: rate(r?.L), S: rate(r?.S), controls: str(r?.controls, 2000), legal: str(r?.legal, 400), resp: str(r?.resp, 200) };
 }
 
 const IMG_RE = /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/;
@@ -230,7 +257,10 @@ export function sanitize(x: any, s: Settings): Project {
   for (const k of Object.keys(base)) {
     const b = base[k], v = src[k];
     if (v === undefined) { out[k] = b; continue; }
-    if (['R07', 'R08', 'R09', 'R10', 'R12'].includes(k)) out[k] = img(v);
+    if (['R07', 'R08', 'R09', 'R10', 'R12', 'I01'].includes(k)) out[k] = img(v);
+    else if (k === 'RR') out[k] = Array.isArray(v) ? v.slice(0, 150).filter((r) => r && typeof r === 'object').map(riskRow) : b;
+    else if (k === 'ER') out[k] = Array.isArray(v) ? v.slice(0, 150).filter((r) => r && typeof r === 'object').map(envRow) : b;
+    else if (k === 'A02mode' || k === 'A03mode') out[k] = REG_MODES.includes(v) ? v : b;
     else if (['A02', 'A03'].includes(k)) out[k] = Array.isArray(v) ? v.map(img).filter(Boolean).slice(0, 40) : [];
     else if (['K01', 'K02', 'K03', 'K04'].includes(k)) out[k] = pers(v);
     else if (['K05', 'K06'].includes(k)) out[k] = Array.isArray(v) ? v.slice(0, 20).map(pers) : b;
@@ -247,5 +277,7 @@ export function sanitize(x: any, s: Settings): Project {
     else out[k] = b;
   }
   if (typeof src.id === 'string' && /^[\w-]{4,40}$/.test(src.id)) out.id = src.id;
+  // a plan from before 1.0.3 has no register mode yet: migrate() chooses it from the scans
+  for (const k of ['A02mode', 'A03mode']) if (src[k] === undefined) delete out[k];
   return migrate(out, s);
 }

@@ -1,7 +1,7 @@
 import pdfMakeLib from 'pdfmake/build/pdfmake';
 import vfsJson from '../fonts/vfs.json';
 import type { Block, DocModel, Run, Row, Cell } from './model';
-import { PAGE, CONTENT_W, NAVY, COVER_BOX } from './model';
+import { PAGE, CONTENT_W, NAVY, COVER_BOX, BANNER, BANNER_LAND_PX } from './model';
 import { assetDataUrl } from '../content/svgs';
 import { APP_NAME } from '../version';
 
@@ -53,10 +53,26 @@ function tableNode(t: { grid: number[]; rows: Row[]; jc?: string; ind?: number; 
   const sz = t.sz || 20;
   const small = t.rows.length <= 15;
   const id = markId(t.mark);
+  // grid column of every cell, for vertical merges (vm 'restart' + 'cont' below -> rowSpan)
+  const colOf = t.rows.map((r) => { let col = 0; return r.c.map((c) => { const k = col; col += c.span || 1; return k; }); });
+  const rowSpan = (ri: number, col: number) => {
+    let n = 1;
+    for (let j = ri + 1; j < t.rows.length; j++) {
+      const k = colOf[j].indexOf(col);
+      if (k < 0 || t.rows[j].c[k].vm !== 'cont') break;
+      n++;
+    }
+    return n;
+  };
   const body: any[][] = t.rows.map((r, ri) => {
     const cells: any[] = [];
     r.c.forEach((c, ci) => {
-      cells.push(cellNode(c, sz, small, ri === t.rows.length - 1 && ci === 0 ? id : undefined));
+      if (c.vm === 'cont') cells.push({});
+      else {
+        const node = cellNode(c, sz, small, ri === t.rows.length - 1 && ci === 0 ? id : undefined);
+        if (c.vm === 'restart') { const n = rowSpan(ri, colOf[ri][ci]); if (n > 1) node.rowSpan = n; }
+        cells.push(node);
+      }
       for (let i = 1; i < (c.span || 1); i++) cells.push({});
     });
     return cells;
@@ -80,7 +96,10 @@ function tableNode(t: { grid: number[]; rows: Row[]; jc?: string; ind?: number; 
 function blockNodes(blocks: Block[], content: any[], img: (k: string) => string, firstBreak: boolean) {
   let first = firstBreak;
   let pending = false;
+  let orient: string | null = null; // a 'sect' block: the next node starts a page in this orientation
   blocks.forEach((b, bi) => {
+    const before = content.length;
+    if (orient && b.t !== 'pb' && b.t !== 'sect') { first = false; pending = false; }
     const nb = blocks[bi + 1];
     const beforeSmallTable = !!nb && ((nb.t === 'tbl' && nb.rows.length <= 15) || nb.t === 'img');
     switch (b.t) {
@@ -123,6 +142,17 @@ function blockNodes(blocks: Block[], content: any[], img: (k: string) => string,
       case 'pb':
         pending = true; // the next block starts a new page
         break;
+      case 'sect':
+        orient = b.land ? 'landscape' : 'portrait';
+        break;
+    }
+    if (orient && content.length > before) {
+      const n = content[before];
+      n.pageBreak = 'before';
+      n.pageOrientation = orient;
+      if (n.headlineLevel === NEW_PAGE) n.headlineLevel = 1;
+      if (Array.isArray(n.margin)) n.margin[1] = 0;
+      orient = null;
     }
   });
 }
@@ -227,20 +257,33 @@ export function pdfDefinition(m: DocModel, pages: Record<string, number>, tocPag
     wmNode = { image: img(m.watermark!), width: w, height: h, absolutePosition: { x: cx - w / 2, y: cy - h / 2 } };
   }
   const bannerUrl = img(m.banner);
+  const bannerLandUrl = img(m.bannerLand);
+  const landW = (BANNER_LAND_PX * BANNER.ptW) / BANNER.px;
+  const contentW = (pageSize: any) => (pageSize?.orientation === 'landscape' ? pageSize.width - pt(PAGE.left) - pt(PAGE.right) : pt(CONTENT_W));
 
   return {
     pageSize: 'A4',
     pageMargins: [pt(PAGE.left), pt(PAGE.top), pt(PAGE.right), pt(PAGE.bottom)],
     info: { title: `${m.title} - ${m.meta.project || ''}`, subject: m.docNo || m.title, creator: APP_NAME, producer: APP_NAME },
     defaultStyle: { font: 'Carlito', fontSize: 12, lineHeight: 1.0 },
-    background: () => [
-      ...(wmNode ? [wmNode] : []),
-      { image: bannerUrl, width: 614.1, height: 81.1, absolutePosition: { x: 0, y: 13.04 } },
-    ],
-    footer: (page: number, count: number) => ({
+    background: (_page: number, pageSize: any) => {
+      const land = pageSize?.orientation === 'landscape';
+      let wmn = wmNode;
+      if (wmNode && land) {
+        const cx = pt(PAGE.left) + contentW(pageSize) / 2, cy = pt(PAGE.top) + (pageSize.height - pt(PAGE.top) - pt(PAGE.bottom)) / 2;
+        wmn = { ...wmNode, absolutePosition: { x: cx - wmNode.width / 2, y: cy - wmNode.height / 2 } };
+      }
+      return [
+        ...(wmn ? [wmn] : []),
+        land
+          ? { image: bannerLandUrl, width: landW, height: BANNER.ptH, absolutePosition: { x: 0, y: BANNER.top } }
+          : { image: bannerUrl, width: BANNER.ptW, height: BANNER.ptH, absolutePosition: { x: 0, y: BANNER.top } },
+      ];
+    },
+    footer: (page: number, count: number, pageSize: any) => ({
       margin: [pt(PAGE.left), 14, pt(PAGE.right), 0], headlineLevel: 2,
       stack: [
-        { canvas: [{ type: 'line', x1: 0, y1: 0, x2: pt(CONTENT_W), y2: 0, lineWidth: 0.5, lineColor: '#D9D9D9' }], headlineLevel: 2 },
+        { canvas: [{ type: 'line', x1: 0, y1: 0, x2: contentW(pageSize), y2: 0, lineWidth: 0.5, lineColor: '#D9D9D9' }], headlineLevel: 2 },
         { columns: [{ text: m.footerLeft, width: '*', headlineLevel: 2 }, { text: `Page ${page} of ${count}`, width: 'auto', headlineLevel: 2 }], fontSize: 9, color: '#595959', margin: [0, 3, 0, 0], headlineLevel: 2 },
       ],
     }),

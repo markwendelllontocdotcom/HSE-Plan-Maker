@@ -6,12 +6,13 @@ import bannerUrl from './assets/banner-default.jpg?inline';
 import logoUrl from './assets/logo-default.png?inline';
 import watermarkUrl from './assets/watermark-default.jpg?inline';
 import flowchartUrl from './assets/flowchart.png?inline';
+import isoUrl from './assets/certs/iso45001.jpg?inline';
 import polOhs from './assets/policies/policy-ohs.jpg?inline';
 import polEnv from './assets/policies/policy-env.jpg?inline';
 import polSus from './assets/policies/policy-sus.jpg?inline';
 import polWelfare from './assets/policies/policy-welfare.jpg?inline';
 
-export const ASSET_URLS = { banner: bannerUrl, logo: logoUrl, watermark: watermarkUrl, flowchart: flowchartUrl };
+export const ASSET_URLS = { banner: bannerUrl, logo: logoUrl, watermark: watermarkUrl, flowchart: flowchartUrl, iso45001: isoUrl };
 /** The signed Oxypro policy statements built into the app (sample HSE Plan, Rev.00, 28.02.2024) */
 export const POLICY_URLS: Record<string, string> = { ohs: polOhs, env: polEnv, sus: polSus, welfare: polWelfare };
 

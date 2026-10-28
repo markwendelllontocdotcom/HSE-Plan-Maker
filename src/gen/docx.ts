@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
 import partsJson from '../content/docx-parts.json';
 import type { Block, DocModel, Run, Row, Cell, CellPara } from './model';
-import { PAGE, CONTENT_W, NAVY, COVER_BOX } from './model';
+import { PAGE, CONTENT_W, CONTENT_WL, NAVY, COVER_BOX, BANNER, BANNER_LAND_PX } from './model';
 import { pageRange } from './pdf';
 import { APP_NAME, APP_VERSION } from '../version';
 
@@ -131,14 +131,33 @@ const fld = (instr: string, shown: string, rp = '') =>
   `<w:r>${rp}<w:fldChar w:fldCharType="begin"/></w:r><w:r>${rp}<w:instrText xml:space="preserve"> ${instr} </w:instrText></w:r><w:r>${rp}<w:fldChar w:fldCharType="separate"/></w:r><w:r>${rp}<w:t>${x(shown)}</w:t></w:r><w:r>${rp}<w:fldChar w:fldCharType="end"/></w:r>`;
 
 // ------------------------------------------------------------------ blocks
-function blocksXml(blocks: Block[], media: Media, firstBreak: boolean): string[] {
+/** Page orientation of the section being written; sectPr(land) writes a section's properties. */
+interface SectState { land: boolean; sectPr: (land: boolean) => string; used: boolean }
+
+/** Ends the current section on the last paragraph written (no extra paragraph, so no blank page). */
+function endSection(out: string[], sec: SectState) {
+  const props = sec.sectPr(sec.land);
+  const i = out.length - 1;
+  const last = i >= 0 ? out[i] : '';
+  if (last.startsWith('<w:p>') || last.startsWith('<w:p ')) {
+    out[i] = last.includes('<w:pPr>') ? last.replace('</w:pPr>', props + '</w:pPr>') : last.replace(/^<w:p( [^>]*)?>/, (m) => m + `<w:pPr>${props}</w:pPr>`);
+  } else out.push(`<w:p><w:pPr>${props}</w:pPr></w:p>`);
+}
+
+function blocksXml(blocks: Block[], media: Media, firstBreak: boolean, sec?: SectState): string[] {
   const out: string[] = [];
   const numIds = new Map<number, number>(); // numbered list -> its own w:num (restarts at 1)
   let first = firstBreak;
   let pending = false; // a 'pb' block: the next paragraph starts a new page (no blank page when it already does)
+  let newSect = false; // a section break was just made: the next paragraph is already on a new page
   blocks.forEach((b, bi) => {
-    const brk = pending;
-    if (b.t !== 'pb') pending = false;
+    if (b.t === 'sect') {
+      if (sec && b.land !== sec.land) { endSection(out, sec); sec.land = b.land; sec.used = sec.used || b.land; newSect = true; first = false; pending = false; }
+      else pending = true;
+      return;
+    }
+    const brk = pending && !newSect;
+    if (b.t !== 'pb') { pending = false; if (newSect) { newSect = false; first = false; if (b.t === 'h') b = { ...b, pbBefore: false }; else if (b.t === 'p') b = { ...b, pbBefore: false }; } }
     const nb = blocks[bi + 1];
     const beforeSmallTable = !!nb && ((nb.t === 'tbl' && nb.rows.length <= 15) || nb.t === 'img');
     switch (b.t) {
@@ -254,31 +273,45 @@ export async function makeDocx(m: DocModel): Promise<Uint8Array> {
   });
   out.push(table({ grid, rows, jc: 'center', sz: 21 }, { keepAll: false }));
 
-  // ---- body
-  out.push(...blocksXml(m.blocks, body, true));
+  // ---- body (landscape sections for the registers)
+  const sectPr = (land: boolean) => {
+    const n = land ? 2 : 1;
+    const size = land ? `<w:pgSz w:w="${PAGE.h}" w:h="${PAGE.w}" w:orient="landscape" w:code="9"/>` : `<w:pgSz w:w="${PAGE.w}" w:h="${PAGE.h}" w:code="9"/>`;
+    return `<w:sectPr><w:headerReference w:type="default" r:id="rIdHdr${n}"/><w:footerReference w:type="default" r:id="rIdFtr${n}"/>${size}<w:pgMar w:top="${PAGE.top}" w:right="${PAGE.right}" w:bottom="${PAGE.bottom}" w:left="${PAGE.left}" w:header="${PAGE.header}" w:footer="${PAGE.footer}" w:gutter="0"/><w:cols w:space="720"/><w:docGrid w:linePitch="360"/></w:sectPr>`;
+  };
+  const sec: SectState = { land: false, sectPr, used: false };
+  out.push(...blocksXml(m.blocks, body, true, sec));
   const usedNums: Map<number, number> = (blocksXml as any).lastNums;
 
-  // ---- header (banner + watermark) and footer
-  const bannerRid = hdr.rid(m.banner);
-  let hdrRuns = anchorImg(bannerRid, 7799070, 1029970, '<wp:positionH relativeFrom="page"><wp:posOffset>0</wp:posOffset></wp:positionH><wp:positionV relativeFrom="page"><wp:posOffset>165574</wp:posOffset></wp:positionV>', false, 'Header banner');
-  if (m.watermark) {
-    const a = m.images[m.watermark];
-    const maxW = 5941060, maxH = 5069205;
-    let cx = maxW, cy = Math.round((maxW * a.h) / a.w);
-    if (cy > maxH) { cy = maxH; cx = Math.round((maxH * a.w) / a.h); }
-    hdrRuns += anchorImg(hdr.rid(m.watermark), cx, cy, '<wp:positionH relativeFrom="margin"><wp:align>center</wp:align></wp:positionH><wp:positionV relativeFrom="margin"><wp:align>center</wp:align></wp:positionV>', true, 'Watermark');
-  }
-  const header = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr ${NS}>${para({ style: 'Header' }, hdrRuns)}</w:hdr>`;
+  // ---- headers (banner + watermark) and footers: portrait (1) and, when the registers are printed, landscape (2)
+  const hdrL = new Media(m, 'rIdHL');
+  const bannerEmu = { cx: 7799070, cy: 1029970 };
+  const makeHeader = (media: Media, land: boolean) => {
+    const cx = land ? Math.round((bannerEmu.cx * BANNER_LAND_PX) / BANNER.px) : bannerEmu.cx;
+    let r = anchorImg(media.rid(land ? m.bannerLand : m.banner), cx, bannerEmu.cy, '<wp:positionH relativeFrom="page"><wp:posOffset>0</wp:posOffset></wp:positionH><wp:positionV relativeFrom="page"><wp:posOffset>165574</wp:posOffset></wp:positionV>', false, 'Header banner');
+    if (m.watermark) {
+      const a = m.images[m.watermark];
+      const maxW = 5941060, maxH = 5069205;
+      let wx = maxW, wy = Math.round((maxW * a.h) / a.w);
+      if (wy > maxH) { wy = maxH; wx = Math.round((maxH * a.w) / a.h); }
+      r += anchorImg(media.rid(m.watermark), wx, wy, '<wp:positionH relativeFrom="margin"><wp:align>center</wp:align></wp:positionH><wp:positionV relativeFrom="margin"><wp:align>center</wp:align></wp:positionV>', true, 'Watermark');
+    }
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr ${NS}>${para({ style: 'Header' }, r)}</w:hdr>`;
+  };
   const grey = '<w:rPr><w:color w:val="595959"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr>';
-  const footer = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr ${NS}>${para({
+  const makeFooter = (width: number) => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr ${NS}>${para({
     style: 'Footer',
     border: '<w:pBdr><w:top w:val="single" w:sz="4" w:space="1" w:color="D9D9D9"/></w:pBdr>',
-    tabs: `<w:tab w:val="clear" w:pos="4680"/><w:tab w:val="clear" w:pos="9360"/><w:tab w:val="right" w:pos="${CONTENT_W}"/>`,
+    tabs: `<w:tab w:val="clear" w:pos="4680"/><w:tab w:val="clear" w:pos="9360"/><w:tab w:val="right" w:pos="${width}"/>`,
     jc: 'left',
   }, `<w:r>${grey}<w:t xml:space="preserve">${x(m.footerLeft)}</w:t></w:r><w:r>${grey}<w:tab/></w:r><w:r>${grey}<w:t xml:space="preserve">Page </w:t></w:r>${fld('PAGE', '1', grey)}<w:r>${grey}<w:t xml:space="preserve"> of </w:t></w:r>${fld('NUMPAGES', '1', grey)}`)}</w:ftr>`;
+  const header = makeHeader(hdr, false);
+  const footer = makeFooter(CONTENT_W);
+  const land = sec.used;
+  const header2 = land ? makeHeader(hdrL, true) : '';
+  const footer2 = land ? makeFooter(CONTENT_WL) : '';
 
-  const sect = `<w:sectPr><w:headerReference w:type="default" r:id="rIdHdr1"/><w:footerReference w:type="default" r:id="rIdFtr1"/><w:pgSz w:w="${PAGE.w}" w:h="${PAGE.h}" w:code="9"/><w:pgMar w:top="${PAGE.top}" w:right="${PAGE.right}" w:bottom="${PAGE.bottom}" w:left="${PAGE.left}" w:header="${PAGE.header}" w:footer="${PAGE.footer}" w:gutter="0"/><w:cols w:space="720"/><w:docGrid w:linePitch="360"/></w:sectPr>`;
-  const document = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${out.join('')}${sect}</w:body></w:document>`;
+  const document = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${out.join('')}${sectPr(sec.land)}</w:body></w:document>`;
 
   // ---- numbering: R1 lists + section hierarchy + bullets / arrows / checks + numbered lists
   const lv = (i: number, text: string, left: number, hang: number, bold: boolean) =>
@@ -309,10 +342,12 @@ export async function makeDocx(m: DocModel): Promise<Uint8Array> {
     rel('rIdStyles', 'styles', 'styles.xml'), rel('rIdNum', 'numbering', 'numbering.xml'), rel('rIdSet', 'settings', 'settings.xml'),
     rel('rIdTheme', 'theme', 'theme/theme1.xml'), rel('rIdFont', 'fontTable', 'fontTable.xml'),
     rel('rIdHdr1', 'header', 'header1.xml'), rel('rIdFtr1', 'footer', 'footer1.xml'),
+    ...(land ? [rel('rIdHdr2', 'header', 'header2.xml'), rel('rIdFtr2', 'footer', 'footer2.xml')] : []),
     ...body.items.map((i) => rel(i.rid, 'image', 'media/' + i.file)),
   ].join('')}</Relationships>`;
-  const hdrRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${hdr.items.map((i) => rel(i.rid, 'image', 'media/' + i.file)).join('')}</Relationships>`;
-  const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Default Extension="jpeg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/numbering.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml"/><Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/><Override PartName="/word/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/><Override PartName="/word/fontTable.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.fontTable+xml"/><Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`;
+  const relsOf = (media: Media) => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${media.items.map((i) => rel(i.rid, 'image', 'media/' + i.file)).join('')}</Relationships>`;
+  const hdrRels = relsOf(hdr);
+  const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Default Extension="jpeg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/numbering.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml"/><Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/><Override PartName="/word/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/><Override PartName="/word/fontTable.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.fontTable+xml"/><Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>${land ? '<Override PartName="/word/header2.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/><Override PartName="/word/footer2.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>' : ''}<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`;
   const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`;
 
   const zip = new JSZip();
@@ -330,6 +365,11 @@ export async function makeDocx(m: DocModel): Promise<Uint8Array> {
   zip.file('word/footer1.xml', footer);
   zip.file('word/_rels/document.xml.rels', docRels);
   zip.file('word/_rels/header1.xml.rels', hdrRels);
-  for (const i of [...body.items, ...hdr.items]) zip.file('word/media/' + i.file, i.bytes);
+  if (land) {
+    zip.file('word/header2.xml', header2);
+    zip.file('word/footer2.xml', footer2);
+    zip.file('word/_rels/header2.xml.rels', relsOf(hdrL));
+  }
+  for (const i of [...body.items, ...hdr.items, ...hdrL.items]) zip.file('word/media/' + i.file, i.bytes);
   return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
 }

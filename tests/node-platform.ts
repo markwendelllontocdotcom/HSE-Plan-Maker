@@ -12,7 +12,7 @@ const file = (n: string): ImgAsset => {
 };
 export const nodePlatform: Platform = {
   async asset(name) {
-    return file(({ banner: 'banner-default.jpg', logo: 'logo-default.png', watermark: 'watermark-default.jpg', flowchart: 'flowchart.png' } as any)[name]);
+    return file(({ banner: 'banner-default.jpg', logo: 'logo-default.png', watermark: 'watermark-default.jpg', flowchart: 'flowchart.png', iso45001: 'certs/iso45001.jpg' } as any)[name]);
   },
   async policy(key) {
     const f: Record<string, string> = { ohs: 'policies/policy-ohs.jpg', env: 'policies/policy-env.jpg', sus: 'policies/policy-sus.jpg', welfare: 'policies/policy-welfare.jpg' };

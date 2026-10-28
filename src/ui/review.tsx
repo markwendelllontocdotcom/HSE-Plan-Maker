@@ -7,10 +7,13 @@ import { codeHeading, BUILTIN_POLICIES } from '../model/defaults';
 import { projectCode } from '../model/format';
 import { people } from '../content/build';
 import { SECTIONS } from '../content/hse';
+import { score, band, significant } from '../content/registers';
 import { cachedPdf, pdfFor, type PdfEntry } from '../exporter';
 import { isIOS } from '../print';
 
 type Issue = { f: FieldSpec; msg: string };
+const regLine = (mode: string, scans: number, rows: string) =>
+  mode === 'register' ? rows : mode === 'scans' ? (scans ? `${scans} scanned page${scans > 1 ? 's' : ''}` : 'Scans chosen, none added yet') : 'Attached separately (the two sentences only)';
 type Level = 'ok' | 'bad' | 'warn' | 'info';
 
 export interface ReviewProps {
@@ -118,6 +121,11 @@ export function Review(props: ReviewProps) {
       ['HSE Standards', `${p.S02.filter((x) => x.trim()).length}`],
       ['Permits', `${p.T01.filter((x) => x.activity.trim()).length} activities, applied ${p.T02 || '24'} hours ahead`],
       ['Objectives / targets', `${p.O01.filter((x) => x.trim()).length} / ${p.O02.filter((x) => x.trim()).length}`],
+    ] },
+    { title: 'Appendices', group: 'appendix', rows: [
+      ['ISO 45001:2018 certificate', p.I01 ? `Newer scan added${p.I01no.trim() ? `, ${p.I01no.trim()}` : ''}` : `Built in, ${p.I01no.trim() || 'CN031157'}${p.I01exp.trim() ? `, expiry ${p.I01exp.trim()}` : ''}`],
+      ['Project Risk Register', regLine(p.A02mode, p.A02.length, `${p.RR.length} activities, ${p.RR.filter((r) => band(score(r.L, r.S))?.key === 'HIGH').length} HIGH before controls, ${p.RR.filter((r) => band(score(r.L2, r.S2))?.key === 'HIGH').length || 'none'} HIGH after`)],
+      ['Environmental Impact Register', regLine(p.A03mode, p.A03.length, `${p.ER.length} aspects, ${p.ER.filter((r) => significant(score(r.L, r.S))).length} significant`)],
     ] },
   ];
 

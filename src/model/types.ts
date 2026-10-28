@@ -30,11 +30,37 @@ export interface PermitRow {
   issuedBy: string;
 }
 
-/** Appendix 4 (added): emergency contact numbers */
+/** Appendix 5 (added): emergency contact numbers */
 export interface ContactRow {
   service: string;
   number: string;
 }
+
+/** Appendix 3 Project Risk Register row (Oxypro RA form columns). L, S = 1-5, 0 = not rated yet. Controls: one per line. */
+export interface RiskRow {
+  activity: string;
+  hazards: string;
+  persons: string;
+  L: number; S: number;   // initial risk
+  controls: string;
+  L2: number; S2: number; // residual risk
+  resp: string;
+}
+
+/** Appendix 4 Environmental Impact Register row. cond: N normal, A abnormal, E emergency. */
+export interface EnvRow {
+  activity: string;
+  aspect: string;
+  impact: string;
+  cond: string;
+  L: number; S: number;
+  controls: string;
+  legal: string;
+  resp: string;
+}
+
+/** What a register appendix prints after its two sentences. */
+export type RegMode = 'register' | 'scans' | 'separate';
 
 /** Section 6 policy statements: the scans built into the app, or a newer scan added by the user. */
 export interface PolicyRow {
@@ -96,8 +122,10 @@ export interface Project {
   // 6. HSE Policy Statements
   POL: PolicyRow[];
   // 7. Appendices
-  A02: ImageData[]; A02ref: string; // Project Risk Register
-  A03: ImageData[]; A03ref: string; // Environmental Impact Register
+  I01: ImageData | null; // Appendix 2: ISO 45001:2018 certificate (null = the certificate built into the app)
+  I01no: string; I01by: string; I01exp: string; // certificate number, certification body, expiry (DD.MM.YYYY)
+  A02mode: RegMode; RR: RiskRow[]; A02: ImageData[]; A02ref: string; // Appendix 3: Project Risk Register
+  A03mode: RegMode; ER: EnvRow[]; A03: ImageData[]; A03ref: string;  // Appendix 4: Environmental Impact Register
   E01: ContactRow[];    // Emergency contact numbers (added)
   // Sections switched off
   OFF: string[];
