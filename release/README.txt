@@ -1,5 +1,5 @@
 HSE PLAN MAKER - User guide
-Version 1.0.1 (28 Oct 2026)
+Version 1.0.2 (28 Oct 2026)
 
 Developed by Mark Lontoc | Dubai, United Arab Emirates | (c) 2026 MLWorks. All rights reserved.
 
@@ -35,7 +35,9 @@ MAKING AN HSE PLAN
   2. Fill in the groups on the left, 1. Project Information to 7. Appendices. A red number shows how
      many entries are still empty or need fixing. Fields marked * are required.
   3. 3. Document Control: type the Document No., Revision and Date in the cover boxes to finalise the
-     document. Left empty, they print as blank boxes for filling in by hand.
+     document. Left empty, they print as blank boxes for filling in by hand. Each plan is a revision of
+     the company sample: it starts as Rev 01 dated today, and the Amendment Record lists Rev 00
+     (26.06.2024, initial issue) and Rev 01. The last row follows the Revision and Date you type.
   4. 5. HSE Requirements: the code of practice for the table of contents (Dubai Code of Construction
      Safety Practice 2008, Abu Dhabi OSHAD-SF, another code or none) and the standard lists (legislation,
      SWPs, HSE Standards, competence certificates, permits, objectives and targets). Reset brings back
@@ -47,7 +49,7 @@ MAKING AN HSE PLAN
   8. Word, PDF, Print or Share (toolbar, summary panel, Review, or My HSE Plans).
 
   Exports are named <Document No.> Rev NN - HSE Plan - <Project>.docx / .pdf, for example
-  OPEM-DXB-101-HS-PLN-001 Rev 00 - HSE Plan - Sample Residential Tower (G+20).pdf
+  OPEM-DXB-101-HS-PLN-001 Rev 01 - HSE Plan - Sample Residential Tower (G+20).pdf
   When Word opens the file it asks to update fields: choose Yes so the table of contents shows Word's
   page numbers.
 
@@ -72,5 +74,7 @@ YOUR DATA
 
 
 VERSION HISTORY
+  1.0.2 (28 Oct 2026) Each plan is Rev 01 of the company sample HSE Plan (Rev 00, 26.06.2024):
+                      the Amendment Record lists both, dates follow the revision date.
   1.0.1 (28 Oct 2026) No "M/s." in the plan: party names print as typed.
   1.0.0 (28 Oct 2026) First release.

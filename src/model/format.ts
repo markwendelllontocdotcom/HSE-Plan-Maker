@@ -61,15 +61,15 @@ export function safeFileName(s: string): string {
 
 export const PLAN_EXT = '.hsep';
 
-/** Plan file name, e.g. "DXB-101 - Sample Residential Tower (G+20) - HSE Plan - Rev 00.hsep". */
+/** Plan file name, e.g. "DXB-101 - Sample Residential Tower (G+20) - HSE Plan - Rev 01.hsep". */
 export function projectFileName(p: Project): string {
   const rev = revText(p) || '00';
   const no = projectCode(p) || String(p.P02 || '').trim();
   return safeFileName([no, (p.P01 || '').trim() || 'Untitled project', 'HSE Plan', `Rev ${rev}`].filter(Boolean).join(' - ')) + PLAN_EXT;
 }
 
-/** Export name, e.g. "OPEM-DXB-101-HS-PLN-001 Rev 00 - HSE Plan - Sample Residential Tower (G+20)".
- *  Without a Document No. yet: "DXB-101 Rev 00 - HSE Plan - …" */
+/** Export name, e.g. "OPEM-DXB-101-HS-PLN-001 Rev 01 - HSE Plan - Sample Residential Tower (G+20)".
+ *  Without a Document No. yet: "DXB-101 Rev 01 - HSE Plan - …" */
 export function outputBaseName(p: Project): string {
   const rev = revText(p) || '00';
   const lead = (p.D01 || '').trim() || projectCode(p) || 'Project';

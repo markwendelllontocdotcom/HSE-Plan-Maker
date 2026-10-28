@@ -114,6 +114,13 @@ export function defaultContacts(): ContactRow[] {
   ];
 }
 
+/** Every plan is a revision of the company sample HSE Plan (Rev 00, 26.06.2024): user request 28 Oct 2026. */
+export const SAMPLE_REV = { rev: '00', date: '26.06.2024', desc: 'Initial issue (Oxypro Project HSE Plan)' };
+export const REVISION_DESC = 'Revised to the Oxypro standard format (same layout as the PQP); numbering and text corrected; project details added';
+export function revisionHistory(date: string) {
+  return [{ ...SAMPLE_REV }, { rev: '01', date, desc: REVISION_DESC }];
+}
+
 export const DEFAULT_TAGLINE = 'THE COMPLETE SOLUTION FOR BUILDING SERVICES';
 export const DEFAULT_COMPANY = 'OXYPRO ELECTROMECHANICAL WORK LLC';
 
@@ -145,10 +152,10 @@ export function newProject(s: Settings): Project {
     R01: '', R02: '', R02m: '', R03: '', R04: s.companyName, R05: 'MEP Subcontractor',
     R07: null, R08: null, R10: null,
     R09: s.logo, R11: s.tagline, R12on: true, R12: s.watermark,
-    D01: '', D03: '00', D04: today, D05: 'Draft',
+    D01: '', D03: '01', D04: today, D05: 'Draft',
     D12: 'HSE Department', D13: 'HSE Department', D14: today, D15: today, D16: 'Projects Head',
     D06: '', D07: 'HSE Manager', D08: '', D09: 'Project Manager', D10: '', D11: 'Projects Head',
-    H01: [{ rev: '00', date: today, desc: 'Initial Issue' }],
+    H01: revisionHistory(today),
     K01: person(), K02: person(), K03: person(), K04: person(), K05: [person()], K06: [person()], K07: [], K08: [], K09: [],
     C01: 'dubai', C01name: codeHeading('dubai'), CHAP: chaptersFor('dubai'),
     L01: [...LEGISLATION], S01: [...SWP], S02: [...HSES], S03: [...COMPETENCE],
@@ -170,9 +177,9 @@ export function testProject(s: Settings): Project {
     P07: 'Supply, installation, testing and commissioning of MEP works.',
     P08: ['HVAC', 'Plumbing & Drainage', 'Electrical', 'Fire Fighting'], P13: 'G+20+R',
     R01: 'Sample Developer LLC', R02: 'Sample Engineering Consultants', R03: 'Sample Main Contractor LLC',
-    D01: 'OPEM-DXB-101-HS-PLN-001', D03: '00', D04: '28.10.2026', D05: 'For Approval', D14: '28.10.2026', D15: '28.10.2026',
+    D01: 'OPEM-DXB-101-HS-PLN-001', D03: '01', D04: '28.10.2026', D05: 'For Approval', D14: '28.10.2026', D15: '28.10.2026',
     D06: 'D. Sample', D08: 'C. Sample', D10: 'H. Sample',
-    H01: [{ rev: '00', date: '28.10.2026', desc: 'First issue for approval' }],
+    H01: revisionHistory('28.10.2026'),
     K01: person('H. Sample'), K02: person('C. Sample'), K03: person('L. Sample'), K04: person('D. Sample'),
     K05: [person('M. Sample')], K06: [person('N. Sample'), person('O. Sample')],
     K07: [{ role: 'Construction Manager', name: 'I. Sample', email: '', phone: '' }],
@@ -200,6 +207,12 @@ export function migrate(p: any, s: Settings): Project {
   out.CHAP = { ...chaptersFor(out.C01 || 'dubai'), ...(out.CHAP || {}) };
   const pol = defaultPolicies();
   out.POL = [...pol.map((d) => ({ ...d, ...(out.POL.find((x: PolicyRow) => x.key === d.key) || {}) })), ...out.POL.filter((x: PolicyRow) => !BUILTIN_POLICIES.includes(x.key))];
+  // 1.0.2: a plan saved earlier with the untouched first-issue record becomes Rev 01 of the company sample
+  if (older(p?.appVersion, '1.0.2') && out.D03 === '00' && out.H01.length === 1 && out.H01[0].rev === '00' && /^initial issue$/i.test(out.H01[0].desc || '')) {
+    const date = out.H01[0].date || out.D04;
+    out.D03 = '01';
+    out.H01 = revisionHistory(date);
+  }
   out.appVersion = APP_VERSION;
   return out as Project;
 }

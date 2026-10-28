@@ -56,7 +56,7 @@ export function About(props: { exportFolder: string | null; canPickFolder: boole
           <li>Type the <b>Document No.</b>, <b>Revision</b> and <b>Date</b> under {go('doc', '3. Document Control')} to finalise the cover. Left empty, they print as blank boxes to fill in by hand.</li>
           <li>Untick any section you do not need under {go('sections', 'Plan Sections')}. The sections after it are renumbered.</li>
           <li>Open {go('review', 'Review')} to check the plan and see every page, then <b>Word</b>, <b>PDF</b>, <b>Print</b> or <b>Share</b> (email with the PDF attached{WEB_LIVE ? ', or a link' : ''}).</li>
-          <li><b>Save</b> keeps the plan as a <b>.hsep</b> file named with the project number, name and revision, for example <i>DXB-101 - Sample Residential Tower (G+20) - HSE Plan - Rev 00.hsep</i>. <b>Open</b> brings it back; <b>Save as</b> keeps each revision in its own file.</li>
+          <li><b>Save</b> keeps the plan as a <b>.hsep</b> file named with the project number, name and revision, for example <i>DXB-101 - Sample Residential Tower (G+20) - HSE Plan - Rev 01.hsep</i>. <b>Open</b> brings it back; <b>Save as</b> keeps each revision in its own file.</li>
         </ol>
         <p class="about-note"><b>Load sample data</b> fills a plan with made-up test data, to see a finished HSE Plan.</p>
       </section>
@@ -64,7 +64,7 @@ export function About(props: { exportFolder: string | null; canPickFolder: boole
       <section>
         <h2>Files and folders</h2>
         <ul>
-          <li><b>Exports</b> are named <code>Document No. Rev NN - HSE Plan - Project name</code>, for example <code>OPEM-DXB-101-HS-PLN-001 Rev 00 - HSE Plan - Sample Residential Tower (G+20).pdf</code>. Without a Document No. yet, the project code is used.</li>
+          <li><b>Exports</b> are named <code>Document No. Rev NN - HSE Plan - Project name</code>, for example <code>OPEM-DXB-101-HS-PLN-001 Rev 01 - HSE Plan - Sample Residential Tower (G+20).pdf</code>. Without a Document No. yet, the project code is used.</li>
           <li><b>Export folder:</b> {props.canPickFolder
             ? <>exports are saved to <b>{props.exportFolder || 'your Downloads folder'}</b>. Change it with <b>Choose folder</b> under the export buttons, for example to the project's folder or the Samples folder.</>
             : <>on this browser exports go to your Downloads folder. In Edge or Chrome on a laptop you can choose a folder instead.</>}</li>
@@ -92,7 +92,7 @@ export function About(props: { exportFolder: string | null; canPickFolder: boole
 
       <section>
         <h2>The standard text</h2>
-        <p>The plan follows the company sample "Project HSE Plan" (Rev 00, 26.06.2024), with these corrections:</p>
+        <p>The plan follows the company sample "Project HSE Plan" (Rev 00, 26.06.2024) and is issued as its revision: a new plan starts as <b>Rev 01</b>, dated the day it is made, and the Amendment Record lists Rev 00 (26.06.2024, initial issue) and Rev 01. These corrections were made in the revision:</p>
         <ul>{CORRECTIONS.map((c) => <li>{c}</li>)}</ul>
       </section>
 

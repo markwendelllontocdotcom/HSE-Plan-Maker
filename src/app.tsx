@@ -512,7 +512,7 @@ export function App() {
             <Review p={p} s={settings} errors={errors} missing={missing} leftOut={leftOut} fileName={fileName} dirtyFile={dirtyFile}
               onGo={setGroup} goTo={goTo} onExport={(k) => exportDoc(k)} onPrint={() => doPrint()} onShare={() => openShare()} onSave={() => doSave(false)} />
           ) : <>
-            {group === 'doc' && <p class="lead">Type the Document No., Revision and Date to finalise the cover. The amendment record's last row follows the Revision and Date.</p>}
+            {group === 'doc' && <p class="lead">Type the Document No., Revision and Date to finalise the cover. Each plan is a revision of the company sample HSE Plan (Rev 00, 26.06.2024), so it starts as Rev 01; the amendment record's last row follows the Revision and Date.</p>}
             {group === 'branding' && <p class="lead">The Oxypro header and watermark, as on the PQP. Change them here for this plan only.</p>}
             {group === 'appendix' && <p class="lead">Appendix 1 (HSE organization chart) is drawn from 4. HSE Organization. For the registers, add page scans or screenshots, or leave them empty to say they are attached separately.</p>}
             {group === 'reqs' && <p class="lead">The standard lists of the Oxypro HSE Plan. Change them for this project; Reset brings back the standard list.</p>}
