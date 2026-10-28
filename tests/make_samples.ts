@@ -1,0 +1,26 @@
+import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
+import { buildDoc } from '../src/content/build';
+import { makeDocx } from '../src/gen/docx';
+import { makePdf } from '../src/gen/pdf';
+import { defaultSettings, testProject } from '../src/model/defaults';
+import { outputBaseName } from '../src/model/format';
+import { nodePlatform } from './node-platform';
+
+const outDir = process.argv[2] || 'samples';
+mkdirSync(outDir, { recursive: true });
+const s = defaultSettings();
+const p = testProject(s);
+const cover = new URL('./fixtures/cover-sample.jpg', import.meta.url).pathname;
+if (existsSync(cover)) p.R10 = { name: 'cover-sample.jpg', type: 'image/jpeg', dataUrl: 'data:image/jpeg;base64,' + readFileSync(cover).toString('base64') };
+if (process.argv.includes('--contacts')) p.OFF = [];
+const t0 = Date.now();
+const model = await buildDoc(p, s, nodePlatform);
+const pdf = await makePdf(model);
+model.pages = pdf.pages;
+const docx = await makeDocx(model);
+const base = 'SAMPLE - ' + outputBaseName(p);
+writeFileSync(`${outDir}/${base}.pdf`, pdf.bytes);
+writeFileSync(`${outDir}/${base}.docx`, docx);
+console.log('blocks', model.blocks.length, 'pdf pages', pdf.pageCount, 'ms', Date.now() - t0);
+console.log(JSON.stringify(model.toc.rows.map((r) => [r.num || r.title, pdf.pages[r.id], pdf.pages[r.end]])));
+console.log(base);
