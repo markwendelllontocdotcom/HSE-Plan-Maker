@@ -46,7 +46,7 @@ export function ImportDialog(props: {
         <div class="imp-cards">
           <button class="imp-card" onClick={props.onFile}>
             <b>Project Library or PQP Maker file</b>
-            <span>The file the Oxypro Project Library saves under "PQP details and file" (.pqp.json), or a PQP Maker project (.pqp). Also brings the cover photo and logos.</span>
+            <span>The file the Oxypro Project Library saves with its <b>HSE</b> button ("Save HSE Plan file", with the cover photo you chose), or under QA/QC &gt; "PQP details and file" (.pqp.json), or a PQP Maker project (.pqp). Also brings the cover photo and logos.</span>
           </button>
           <button class="imp-card" onClick={props.onMaster}>
             <b>Projects Master List (Excel)</b>
@@ -55,7 +55,7 @@ export function ImportDialog(props: {
         </div>
         <label class="imp-link">
           <b>Or paste the link from the Project Library</b>
-          <span class="muted">In the Library: open the project, click "PQP details and file", then copy the "Open in PQP Maker" link.</span>
+          <span class="muted">In the Library: open the project, then HSE &gt; Open in HSE Plan Maker opens this app directly. A link copied from QA/QC &gt; "PQP details and file" ("Open in PQP Maker") works here too.</span>
           <textarea rows={3} value={link} placeholder="https://…#library=…" onInput={(e) => setLink((e.target as HTMLTextAreaElement).value)} />
         </label>
         {props.error && <p class="err" role="alert">{props.error}</p>}

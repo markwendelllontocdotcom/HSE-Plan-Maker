@@ -9,7 +9,7 @@ import { parseDMY, outputBaseName, projectFileName } from '../src/model/format';
 import { allErrors, emptyBoxes, riskIssues, envIssues } from '../src/model/fields';
 import { riskRows, envRows, score, band, significant } from '../src/content/registers';
 import { textOnly, emlDraft } from '../src/share';
-import { readMasterList, parseProjectText, applyImport } from '../src/importers';
+import { readMasterList, parseProjectText, applyImport, readLibraryLink, deflate, toBase64Url } from '../src/importers';
 import { nodePlatform } from './node-platform';
 
 let fails = 0;
@@ -138,6 +138,19 @@ ok(applied.D06 === 'HSE Sample' && applied.D08 === 'PM Sample' && applied.D10 ==
 const rows = await readMasterList(readFileSync('tests/fixtures/master-list-sample.xlsx'));
 ok(rows.length === 2 && rows[0].fields.P02 === 'DXB-901' && rows[0].fields.P05 === 'Plot 111-222, Sample Community' && rows[0].fields.R02 === 'Sample Architects' && rows[0].fields.R02m === 'Sample MEP Consultants', 'Master List row 1');
 ok(rows[1].fields.P04 === 'Abu Dhabi' && rows[1].fields.R02 === 'Sample Engineering' && !rows[1].fields.R02m, 'Master List row 2 (AUH, lead consultant na)');
+// the Library's HSE button: "Save HSE Plan file" and "Open in HSE Plan Maker" (made-up project)
+const dot = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+const hseFile = { format: 'pqp-maker-project', version: 1, source: { library: '1.12.0', for: 'HSE Plan Maker' }, project: {
+  P01: 'Sample Library Tower', P02: 'DXB-555', P04: 'Dubai', P05: 'Plot 555-000, Sample Bay', P07: 'MEP works', P13: 'B+G+12',
+  R01: 'Sample Owner LLC', R02: 'Sample Architects', R02m: 'Sample MEP Engineers', R03: 'Sample Builders LLC', R10: { name: 'Photo 2.jpg', dataUrl: dot } } };
+const hf = parseProjectText(JSON.stringify(hseFile), 'DXB-555 - Sample Library Tower - HSE Plan details.json');
+ok(hf.source === 'Oxypro Project Library' && hf.fields.P02 === 'DXB-555' && hf.fields.R02 === 'Sample Architects' && hf.fields.R02m === 'Sample MEP Engineers' && hf.fields.R10?.dataUrl === dot && hf.fields.P13 === 'B+G+12', 'Library HSE file: project details, MEP Consultant and cover photo');
+const hfa = applyImport(newProject(s), hf.fields);
+ok(hfa.R02m === 'Sample MEP Engineers' && hfa.R10?.name === 'Photo 2.jpg' && hfa.P01 === 'Sample Library Tower', 'Library HSE file applied to a new plan');
+ok(!parseProjectText(JSON.stringify({ ...hseFile, project: { ...hseFile.project, R02m: 'M/s. Sample Architects' } }), 'x').fields.R02m, 'MEP Consultant left out when it is the Lead Consultant');
+const z = await deflate(JSON.stringify(hseFile));
+const fromLink = await readLibraryLink('https://markwendelllontocdotcom.github.io/HSE-Plan-Maker/#library=' + toBase64Url(z!));
+ok(fromLink.fields.R02m === 'Sample MEP Engineers' && fromLink.fields.R10?.dataUrl === dot && fromLink.label === 'Sample Library Tower', 'Library link to HSE Plan Maker: details and cover photo');
 let threw = false;
 try { parseProjectText('{"format":"x"}', 'bad.json'); } catch { threw = true; }
 ok(threw, 'unknown file refused');

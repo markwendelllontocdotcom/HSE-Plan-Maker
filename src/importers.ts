@@ -5,8 +5,9 @@ import { PROJECT_CODE, PROJECT_CODE_MAX } from './model/format';
 
 /**
  * Project details from the other Oxypro tools, so every submission uses the same project information:
- *  - a PQP Maker project (.pqp) or the file the Oxypro Project Library saves under "PQP details and file" (.pqp.json)
- *  - the link the Library makes for PQP Maker ("Open in PQP Maker": #library=<deflate-raw base64url JSON>)
+ *  - the file the Oxypro Project Library saves with its HSE button ("Save HSE Plan file": <code> - <name> - HSE Plan details.json,
+ *    with the chosen cover photo) or under QA/QC > "PQP details and file" (.pqp.json), or a PQP Maker project (.pqp)
+ *  - the link the Library makes ("Open in HSE Plan Maker" / "Open in PQP Maker": #library=<deflate-raw base64url JSON>)
  *  - the Excel "Oxypro - Projects Master List" (sheet OXYPRO PROJECT MASTER CASE, headers on row 3)
  *  - another HSE plan (its project details only)
  * Only project details are taken. People, document control, lists and policies stay as they are in the HSE plan.
@@ -45,6 +46,10 @@ function image(x: any): ImageData | null {
 export function fromPqp(x: any): Partial<Project> {
   const out: any = {};
   for (const k of ['P01', 'P05', 'P07', 'P13', 'R01', 'R02', 'R03', 'R04']) { const v = str(x[k], MAX[k] || 200); if (v) out[k] = v; }
+  // MEP Consultant (the Library's HSE file and links send it when it is a different firm from the Lead Consultant)
+  const mep = str(x.R02m);
+  const bare = (v: string) => v.replace(/^\s*M\/s\.?\s*/i, '').trim().toLowerCase();
+  if (mep && !naOrEmpty(mep) && bare(mep) !== bare(out.R02 || '')) out.R02m = mep;
   const c = code(x.P02); if (c) out.P02 = c;
   const e = emirateOf(x.P04); if (e) out.P04 = e;
   if (Array.isArray(x.P08)) { const l = x.P08.filter((d: any) => DISCIPLINES.includes(d)); if (l.length) out.P08 = l; }
@@ -107,7 +112,7 @@ export const hasShareHash = (h: string) => /#hse(-json)?=/.test(h || '');
 /** Reads #library= / #library-json= (the PQP Maker link the Library makes) from a link or hash. */
 export async function readLibraryLink(link: string): Promise<Incoming> {
   const m = (link || '').match(/#library(-json)?=([A-Za-z0-9_-]+)/);
-  if (!m) throw new Error('This is not a link from the Oxypro Project Library. In the Library, open the project, click "PQP details and file", then copy the "Open in PQP Maker" link.');
+  if (!m) throw new Error('This is not a link from the Oxypro Project Library. In the Library, open the project and use HSE > Open in HSE Plan Maker, or QA/QC > PQP details and file > copy the "Open in PQP Maker" link.');
   let text: string;
   try { const bytes = fromBase64Url(m[2]); text = m[1] ? new TextDecoder().decode(bytes) : await inflate(bytes); }
   catch (e: any) { throw new Error(e?.message && /browser/.test(e.message) ? e.message : 'The link could not be read. Copy it again from the Library.'); }

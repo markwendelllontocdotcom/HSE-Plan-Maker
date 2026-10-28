@@ -1,5 +1,5 @@
 HSE PLAN MAKER - User guide
-Version 1.0.4 (29 Oct 2026)
+Version 1.0.5 (29 Oct 2026)
 
 Developed by Mark Lontoc | Dubai, United Arab Emirates | (c) 2026 MLWorks. All rights reserved.
 
@@ -31,8 +31,10 @@ OPENING THE APP
 MAKING AN HSE PLAN
   1. My HSE Plans lists every plan on this computer with Preview, Word and PDF buttons.
      Click New plan, or Import project to fill the project details from:
-       - the Oxypro Project Library: the file saved under "PQP details and file" (.pqp.json), or the
-         "Open in PQP Maker" link pasted into the Import window;
+       - the Oxypro Project Library: open the project and click HSE, choose the cover photo, then
+         "Save HSE Plan file" (or "Open in HSE Plan Maker", which opens the web version directly).
+         The file saved under QA/QC > "PQP details and file" (.pqp.json) works too. Open takes
+         these files as well;
        - a PQP Maker project (.pqp), so the HSE Plan uses the same details as the PQP;
        - the Excel "Oxypro - Projects Master List" (pick the project from the list).
   2. Fill in the groups on the left, 1. Project Information to 7. Appendices. A red number shows how
@@ -89,7 +91,9 @@ YOUR DATA
 
 
 VERSION HISTORY
-  1.0.4 (29 Oct 2026) Web version published (GitHub Pages); share links switched on.
+  1.0.5 (29 Oct 2026) Web version published (GitHub Pages); share links switched on.
+  1.0.4 (29 Oct 2026) The Project Library's HSE file brings the project details, the MEP Consultant
+                      and the cover photo chosen in the Library.
   1.0.3 (28 Oct 2026) Appendix 2 ISO 45001:2018 certificate; Appendix 3 Project Risk Register and
                       Appendix 4 Environmental Impact Register printed in full on landscape pages and
                       editable per plan; updated incident investigation flowchart.
